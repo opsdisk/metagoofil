@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# GPL v 2.0 License
+# Opsdisk LLC | opsdisk.com
+
 import argparse
 import google  # https://pypi.python.org/pypi/google
 import os
