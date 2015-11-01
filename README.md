@@ -1,2 +1,73 @@
-# metagoofil
-An updated version of metagoofil
+##### Introduction
+
+One of the best tools for conducting document and metadata reconnaissance during a pen test is [metagoofil](http://www.edge-security.com/metagoofil.php), written by Christian Martorella [@laramies](http://twitter.com/laramies) of the [Edge-Security Group](http://www.edge-security.com/).  The source code can be found here: [https://github.com/laramies/metagoofil](https://github.com/laramies/metagoofil), but it comes with Kali by default.  The tool hasn't been updated in a couple of years and could use some TLC.
+
+##### tl;dr
+New code is here, take it for a spin: https://github.com/opsdisk/metagoofil
+
+##### metagoofil
+There are two parts to metagoofil.  The first part is the ability to search Google for specific types of files being publically hosted on a domain and download them to your local box.  For instance, it uses this Google query to find all the .pdf files being hosted on example.com and downloads a local copy
+
+     site:example.com filetype:pdf
+
+The second part of metagoofil is metadata extraction which searches for users, software, file paths, and emails in the files and documents.
+
+##### File Download Rewrite
+
+I rewrote the Google search and download functionality.  The original metagoofil uses a custom googlesearch.py module which does not return legitimate or valid results all the time.  For example, it considers this a URL:
+
+    [1/10] /webhp?hl=en
+        [x] Error downloading /webhp?hl=en
+
+There is a python package, appropriately called "google", https://pypi.python.org/pypi/google), that will abstract the searching and returning of valid URLs.  
+
+The `google` package can be installed using pip
+
+    pip install google
+
+The full `google` package documentation can be found [here](http://pythonhosted.org/google/), but the parameters we care about are:
+
+    query (str) - Query string. Must NOT be url-encoded.
+    num (int) - Number of results per page.
+    start (int) - First result to retrieve.
+    stop (int) - Last result to retrieve. Use None to keep searching forever.
+    pause (float) - Lapse to wait between HTTP requests. A lapse too long will make the search slow, but a lapse too short may cause Google to block your IP. Your mileage may vary!
+
+The code snippet below from the updated metagoofil.py takes care of searching Google for a specified domain and file type, and returns a reliable and accurate list of URLs, exactly what we need!
+
+```python
+query = "filetype:" + filetype + " site:" + self.domain
+for url in google.search(query, start=0, stop=self.searchMax, num=100, pause=self.delay):
+    files.append(url)
+            
+# Since google.search method retreives URLs in batches of 100, ensure the file list only contains the requested amount
+if len(files) > self.searchMax:
+    files = files[:-(len(files) - self.searchMax)]
+```
+
+I hardcoded the `num` parameter to return the most results per page, and just trim off any extra URLs if the user is seeking less than 100 results.
+
+This package will handle all the logic and heavy lifting of accurately searching Google, instead of relying on custom-written search code.
+
+The remaining updates deal with the switches.  The same switches were kept as in the original metagoofil to avoid confusion, with new ones also added.  
+
+The `-f` switch writes all the links to a date-time stamped .txt file instead of an HTML file.  This allows for quick copy/paste or as an input file for other downloading binaries like curl and wget.
+
+For grins, another addition is that the `-t` file type switch recognizes "ALL" which will search all 17,576 three-letter file extensions.  A search would likely take a while and you should plan accordingly.
+
+The maximum file download switch, `-m`, allows you to only download files that are less than that maximum value in bytes, with 5000000 being the default (about 5 MB).
+
+Lastly, the addition of the `-e` delay switch allows you to specify the time delay in seconds between searches.  If you request searches too quickly, Google will think you are a script or bot and will block your IP address for a while.  Experiment to see what works best for you.
+
+##### Metadata Extraction
+
+Metagoofil is supposed to allow local file metadata analysis, using the `-h yes` switch, but it doesn't usually work for me if I'm running it after acquiring the files. Currently, I use `exiftool` to extract any metadata I care about in files and it's good enough.
+
+    exiftool -r *.doc | egrep -i "Author|Creator|Email|Producer|Template" | sort -u
+
+##### Future Work
+I'll be taking a look at the metadata analysis part to see if that can be improved and streamlined.  Or I may just incorporate the native exiftool to display the results.  Either way, I'll eventually submit a pull request to the Edge-Security folks to see if they like the updates.  
+
+##### Conclusion
+All of the code can be found on the Opsdisk Github repository here: https://github.com/opsdisk/metagoofil.  Comments, suggestions, and improvements are always welcome.  Be sure to follow [@opsdisk](https://twitter.com/opsdisk) on Twitter for the latest updates. 
+ 
