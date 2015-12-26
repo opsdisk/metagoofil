@@ -13,7 +13,7 @@ import urllib2
 
 class Metagoofil:
 
-    def __init__(self, domain, fileTypes, searchMax, downloadFileLimit, maxDownloadSize, saveDirectory, downloadFiles, saveLinks, delay):
+    def __init__(self, domain, fileTypes, searchMax, downloadFileLimit, maxDownloadSize, saveDirectory, downloadFiles, saveLinks, delay, urlTimeout):
         self.domain = domain
         self.fileTypes = fileTypes
         self.searchMax = searchMax
@@ -24,6 +24,7 @@ class Metagoofil:
         self.saveLinks = saveLinks
         self.delay = delay
         self.totalBytes = 0
+        self.urlTimeout = urlTimeout
 
     def go(self):
         if "ALL" in self.fileTypes:
@@ -81,7 +82,7 @@ class Metagoofil:
                         self.totalBytes += size
                         counter += 1
                 except:
-                    print "[-] Timed out after 5 seconds...file likely does not exist: " + url            
+                    print "[-] Timed out after " + str(self.urlTimeout) + " seconds...can't reach url: " + url            
                     
                                
 def get_timestamp():
@@ -106,6 +107,7 @@ if __name__ == "__main__":
     parser.add_argument('-w', dest='downloadFiles', action='store_true', default=False, help='Download the files, instead of just viewing search results')
     parser.add_argument('-f', dest='saveLinks', action='store_true', default=False, help='Save the html links to html_links_<TIMESTAMP>.txt file')
     parser.add_argument('-e', dest='delay', action='store', type=float, default=7.0, help='Delay (in seconds) between searches.  If it\'s too small Google may block your IP, too big and your search may take a while.')
+    parser.add_argument('-i', dest='urlTimeout', action='store', type=int, default=5, help='Number of seconds to wait before timeout for unreachable/stale pages (default 5)')
 
     args = parser.parse_args()
 
@@ -125,6 +127,9 @@ if __name__ == "__main__":
             os.mkdir(args.saveDirectory)
     if args.delay < 0:
         print "[!] Delay must be greater than 0"
+        sys.exit()
+    if args.urlTimeout < 0:
+        print "[!] URL timeout (-i) must be greater than 0"
         sys.exit()
 
     #print vars(args)
