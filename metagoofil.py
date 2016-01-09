@@ -60,7 +60,7 @@ class Metagoofil:
         self.queue = Queue.Queue() 
         self.numThreads = numThreads
 
-        self.files = []  # Stores URLs with files
+        
 
     def go(self):
         # Kickoff the threadpool.
@@ -76,6 +76,8 @@ class Metagoofil:
             self.fileTypes = [''.join(i) for i in product(ascii_lowercase, repeat=3)]
 
         for filetype in self.fileTypes:
+            self.files = []  # Stores URLs with files, clear out for each filetype
+
             # Search for the files to download
             print("[*] Searching for " + str(self.searchMax) + " ." + filetype + " files and waiting " + str(self.delay) + " seconds between searches")
             query = "filetype:" + filetype + " site:" + self.domain
