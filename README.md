@@ -6,7 +6,7 @@ One of the best tools for conducting document and metadata reconnaissance during
 New code is here, take it for a spin: https://github.com/opsdisk/metagoofil
 
 ##### metagoofil
-There are two parts to metagoofil.  The first part is the ability to search Google for specific types of files being publically hosted on a domain and download them to your local box.  For instance, it uses this Google query to find all the .pdf files being hosted on example.com and downloads a local copy
+There are two parts to metagoofil.  The first part is the ability to search Google for specific types of files being publicly hosted on a domain and download them to your local box.  For instance, it uses this Google query to find all the .pdf files being hosted on example.com and downloads a local copy
 
      site:example.com filetype:pdf
 
@@ -41,8 +41,8 @@ for url in google.search(query, start=0, stop=self.searchMax, num=100, pause=sel
     files.append(url)
             
 # Since google.search method retreives URLs in batches of 100, ensure the file list only contains the requested amount
-if len(files) > self.searchMax:
-    files = files[:-(len(files) - self.searchMax)]
+if len(self.files) > self.searchMax:
+    self.files = self.files[:-(len(self.files) - self.searchMax)]
 ```
 
 I hardcoded the `num` parameter to return the most results per page, and just trim off any extra URLs if the user is seeking less than 100 results.
@@ -57,7 +57,15 @@ For grins, another addition is that the `-t` file type switch recognizes "ALL" w
 
 The maximum file download switch, `-m`, allows you to only download files that are less than that maximum value in bytes, with 5000000 being the default (about 5 MB).
 
-Lastly, the addition of the `-e` delay switch allows you to specify the time delay in seconds between searches.  If you request searches too quickly, Google will think you are a script or bot and will block your IP address for a while.  Experiment to see what works best for you.
+The addition of the `-e` delay switch allows you to specify the time delay in seconds between searches.  If you request searches too quickly, Google will think you are a script or bot and will block your IP address for a while.  Experiment to see what works best for you.
+
+Lastly, the `-r` switch allows you to specify the number of threads to use when downloading files.  Note that one network appliance / DDoS cloud solution detected the script as a bot and returned a 188 byte HTML file stating:
+
+    The requested URL was rejected. Please consult with your administrator.
+
+    Your support ID is: 1234567890
+
+If that happens, just set the number of threads to 1...it will take longer but you will not get blocked.
 
 ##### Metadata Extraction
 
