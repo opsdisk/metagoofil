@@ -60,8 +60,6 @@ class Metagoofil:
         self.queue = Queue.Queue() 
         self.numThreads = numThreads
 
-        
-
     def go(self):
         # Kickoff the threadpool.
         for i in range(self.numThreads):
@@ -81,7 +79,7 @@ class Metagoofil:
             # Search for the files to download
             print("[*] Searching for " + str(self.searchMax) + " ." + filetype + " files and waiting " + str(self.delay) + " seconds between searches")
             query = "filetype:" + filetype + " site:" + self.domain
-            for url in google.search(query, start=0, stop=self.searchMax, num=100, pause=self.delay):
+            for url in google.search(query, start=0, stop=self.searchMax, num=100, pause=self.delay, extra_params={'filter': '0'}):
                 self.files.append(url)
             
             # Since google.search method retreives URLs in batches of 100, ensure the file list only contains the requested amount
