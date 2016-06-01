@@ -24,7 +24,10 @@ class Worker(threading.Thread):
             # Grab URL off the queue
             url = mg.queue.get()
             try:
-                response = urllib2.urlopen(url, timeout=5)
+                request = urllib2.Request(url)
+                request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36')
+                response = urllib2.urlopen(request, timeout=mg.urlTimeout)
+
                 # Determine if file is small enough to download
                 size = int(response.headers["Content-Length"])
                 if (size > mg.maxDownloadSize):
@@ -112,7 +115,7 @@ class Metagoofil:
             if self.counter <= self.downloadFileLimit:
                 self.queue.put(url)
                 self.counter += 1
-
+        
         self.queue.join()
 
 
@@ -132,7 +135,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', dest='domain', action='store', required=True, help='Domain to search')
     parser.add_argument('-t', dest='fileTypes', action='store', required=True, type=csv_list, help='Filetypes to download (pdf,doc,xls,ppt,odp,ods,docx,xlsx,pptx).  To search all 17,576 three-letter file extensions, type "ALL"')
     parser.add_argument('-l', dest='searchMax', action='store', type=int, default=100, help='Maximum results to search (default 100)')
-    parser.add_argument('-n', dest='downloadFileLimit', action='store', type=int, help='Maximum number of files to download per filetype')
+    parser.add_argument('-n', dest='downloadFileLimit', default=100, action='store', type=int, help='Maximum number of files to download per filetype (default is 100)')
     parser.add_argument('-m', dest='maxDownloadSize', action='store', type=int, default=5000000, help='Max filesize (in bytes) to download (default 5000000)')
     parser.add_argument('-o', dest='saveDirectory', action='store', default=os.getcwd(), help='Directory to save downloaded files (default is cwd, ".")')
     parser.add_argument('-w', dest='downloadFiles', action='store_true', default=False, help='Download the files, instead of just viewing search results')
@@ -167,7 +170,7 @@ if __name__ == "__main__":
         print("[!] Number of threads (-n) must be greater than 0")
         sys.exit()
 
-    #print vars(args)
+    #print(vars(args))
     mg = Metagoofil(**vars(args))
     mg.go()
 
