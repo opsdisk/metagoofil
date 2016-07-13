@@ -7,10 +7,10 @@ import argparse
 import google  # https://pypi.python.org/pypi/google
 import os
 import Queue
+import random
 import sys
 import threading
 import time
-import urllib
 import urllib2
 
 
@@ -25,19 +25,25 @@ class Worker(threading.Thread):
             url = mg.queue.get()
             try:
                 request = urllib2.Request(url)
-                request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36')
-                response = urllib2.urlopen(request, timeout=mg.urlTimeout)
 
-                # Determine if file is small enough to download
-                size = int(response.headers["Content-Length"])
-                if (size > mg.maxDownloadSize):
-                    print("[-] File is too large [" + str(size) + " bytes] to download " + url)
+                # Assign a user agent
+                if mg.randUserAgent:
+                    request.add_header('User-Agent', random.choice(mg.userAgents))   
                 else:
-                    print("[+] Downloading file - [" + str(size) + " bytes] " + url)
-                    filename = str(url.split("/")[-1]) 
-                    urllib.urlretrieve(url, mg.saveDirectory + "/" + filename)
-                    mg.totalBytes += size
-                    
+                    request.add_header('User-Agent', 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)')
+
+                response = urllib2.urlopen(request, timeout=mg.urlTimeout)
+                
+                # Download the file
+                size = int(response.headers["Content-Length"])                
+                print("[+] Downloading file - [" + str(size) + " bytes] " + url)                
+                filename = str(url.split("/")[-1]) 
+                with open(mg.saveDirectory + "/" + filename, 'wb') as fp:
+                    fp.write(response.read())
+                    fp.close() 
+
+                mg.totalBytes += size
+
             except:
                 print("[-] Timed out after " + str(mg.urlTimeout) + " seconds...can't reach url: " + url)
             
@@ -46,22 +52,28 @@ class Worker(threading.Thread):
 
 class Metagoofil:
 
-    def __init__(self, domain, fileTypes, searchMax, downloadFileLimit, maxDownloadSize, saveDirectory, downloadFiles, saveLinks, delay, urlTimeout, numThreads):
+    def __init__(self, domain, delay, saveLinks, urlTimeout, searchMax, downloadFileLimit, saveDirectory, numThreads, fileTypes, randUserAgent, downloadFiles):
         self.domain = domain
-        self.fileTypes = fileTypes
+        self.delay = delay
+        self.saveLinks = saveLinks
+        self.urlTimeout = urlTimeout
         self.searchMax = searchMax
         self.downloadFileLimit = downloadFileLimit
-        self.maxDownloadSize = maxDownloadSize
         self.saveDirectory = saveDirectory
-        self.downloadFiles = downloadFiles
-        self.saveLinks = saveLinks
-        self.delay = delay
-        self.totalBytes = 0
-        self.urlTimeout = urlTimeout
-        
+
         # Create queue and specify the number of worker threads.
         self.queue = Queue.Queue() 
         self.numThreads = numThreads
+
+        self.fileTypes = fileTypes
+            
+        self.randUserAgent = randUserAgent
+        if self.randUserAgent:
+            with open('user_agents.txt') as fp:
+                self.userAgents = fp.readlines()
+        
+        self.downloadFiles = downloadFiles 
+        self.totalBytes = 0
 
     def go(self):
         # Kickoff the threadpool.
@@ -133,17 +145,16 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description='Metagoofil - Search and Download Filetypes')
     parser.add_argument('-d', dest='domain', action='store', required=True, help='Domain to search')
-    parser.add_argument('-t', dest='fileTypes', action='store', required=True, type=csv_list, help='Filetypes to download (pdf,doc,xls,ppt,odp,ods,docx,xlsx,pptx).  To search all 17,576 three-letter file extensions, type "ALL"')
-    parser.add_argument('-l', dest='searchMax', action='store', type=int, default=100, help='Maximum results to search (default 100)')
-    parser.add_argument('-n', dest='downloadFileLimit', default=100, action='store', type=int, help='Maximum number of files to download per filetype (default is 100)')
-    parser.add_argument('-m', dest='maxDownloadSize', action='store', type=int, default=5000000, help='Max filesize (in bytes) to download (default 5000000)')
-    parser.add_argument('-o', dest='saveDirectory', action='store', default=os.getcwd(), help='Directory to save downloaded files (default is cwd, ".")')
-    parser.add_argument('-w', dest='downloadFiles', action='store_true', default=False, help='Download the files, instead of just viewing search results')
-    parser.add_argument('-f', dest='saveLinks', action='store_true', default=False, help='Save the html links to html_links_<TIMESTAMP>.txt file')
     parser.add_argument('-e', dest='delay', action='store', type=float, default=7.0, help='Delay (in seconds) between searches.  If it\'s too small Google may block your IP, too big and your search may take a while.')
+    parser.add_argument('-f', dest='saveLinks', action='store_true', default=False, help='Save the html links to html_links_<TIMESTAMP>.txt file')
     parser.add_argument('-i', dest='urlTimeout', action='store', type=int, default=5, help='Number of seconds to wait before timeout for unreachable/stale pages (default 5)')
+    parser.add_argument('-l', dest='searchMax', action='store', type=int, default=100, help='Maximum results to search (default 100)')
+    parser.add_argument('-n', dest='downloadFileLimit', default=100, action='store', type=int, help='Maximum number of files to download per filetype (default is 100)')    
+    parser.add_argument('-o', dest='saveDirectory', action='store', default=os.getcwd(), help='Directory to save downloaded files (default is cwd, ".")')
     parser.add_argument('-r', dest='numThreads', action='store', type=int, default=8, help='Number of search threads (default is 8)')
-
+    parser.add_argument('-t', dest='fileTypes', action='store', required=True, type=csv_list, help='Filetypes to download (pdf,doc,xls,ppt,odp,ods,docx,xlsx,pptx).  To search all 17,576 three-letter file extensions, type "ALL"')
+    parser.add_argument('-u', dest='randUserAgent', action='store_true', default=False, help='Randomize the user agent.  Default: Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)')
+    parser.add_argument('-w', dest='downloadFiles', action='store_true', default=False, help='Download the files, instead of just viewing search results')
     args = parser.parse_args()
 
     if not args.domain:
