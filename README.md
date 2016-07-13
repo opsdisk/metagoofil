@@ -55,7 +55,7 @@ The `-f` switch writes all the links to a date-time stamped .txt file instead of
 
 For grins, another addition is that the `-t` file type switch recognizes "ALL" which will search all 17,576 three-letter file extensions.  A search would likely take a while and you should plan accordingly.
 
-The maximum file download switch, `-m`, allows you to only download files that are less than that maximum value in bytes, with 5000000 being the default (about 5 MB).
+~~The maximum file download switch, `-m`, allows you to only download files that are less than that maximum value in bytes, with 5000000 being the default (about 5 MB).~~ (Removed the switch on July 12, 2016 since it was retrieving the file twice, once to check the size, then again if it was within the max value...seemed redundant.)
 
 The addition of the `-e` delay switch allows you to specify the time delay in seconds between searches.  If you request searches too quickly, Google will think you are a script or bot and will block your IP address for a while.  Experiment to see what works best for you.
 
@@ -66,6 +66,9 @@ Lastly, the `-r` switch allows you to specify the number of threads to use when 
     Your support ID is: 1234567890
 
 If that happens, just set the number of threads to 1...it will take longer but you will not get blocked.
+
+Added the `-u` user agent switch to randomize a user agent from user_agents.txt.  Otherwise, the default is 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'.
+
 
 ##### Metadata Extraction
 
