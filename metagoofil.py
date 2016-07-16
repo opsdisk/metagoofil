@@ -26,12 +26,17 @@ class Worker(threading.Thread):
             try:
                 request = urllib2.Request(url)
 
-                # Assign a user agent
-                if mg.randUserAgent:
-                    request.add_header('User-Agent', random.choice(mg.userAgents))   
-                else:
+                # Assign a User-Agent
+                # No -u
+                if mg.userAgent == 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)':
                     request.add_header('User-Agent', 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)')
-
+                # -u
+                elif mg.userAgent is None:
+                    request.add_header('User-Agent', random.choice(mg.randomUserAgents))   
+                # -u "My custom user agent 2.0"
+                else:
+                    request.add_header('User-Agent', mg.userAgent)
+                    
                 response = urllib2.urlopen(request, timeout=mg.urlTimeout)
                 
                 # Download the file
@@ -52,7 +57,7 @@ class Worker(threading.Thread):
 
 class Metagoofil:
 
-    def __init__(self, domain, delay, saveLinks, urlTimeout, searchMax, downloadFileLimit, saveDirectory, numThreads, fileTypes, randUserAgent, downloadFiles):
+    def __init__(self, domain, delay, saveLinks, urlTimeout, searchMax, downloadFileLimit, saveDirectory, numThreads, fileTypes, userAgent, downloadFiles):
         self.domain = domain
         self.delay = delay
         self.saveLinks = saveLinks
@@ -67,10 +72,11 @@ class Metagoofil:
 
         self.fileTypes = fileTypes
             
-        self.randUserAgent = randUserAgent
-        if self.randUserAgent:
+        self.userAgent = userAgent
+        # Populate a list of random User-Agents
+        if self.userAgent is None:
             with open('user_agents.txt') as fp:
-                self.userAgents = fp.readlines()
+                self.randomUserAgents = fp.readlines()
         
         self.downloadFiles = downloadFiles 
         self.totalBytes = 0
@@ -140,10 +146,19 @@ def get_timestamp():
 def csv_list(string):
     return string.split(',')                    
 
- 
+
+# http://stackoverflow.com/questions/3853722/python-argparse-how-to-insert-newline-in-the-help-text
+class SmartFormatter(argparse.HelpFormatter):
+
+    def _split_lines(self, text, width):
+        if text.startswith('R|'):
+            return text[2:].splitlines()  
+        # This is the RawTextHelpFormatter._split_lines
+        return argparse.HelpFormatter._split_lines(self, text, width)
+
 if __name__ == "__main__":
     
-    parser = argparse.ArgumentParser(description='Metagoofil - Search and Download Filetypes')
+    parser = argparse.ArgumentParser(description='Metagoofil - Search and Download Filetypes', formatter_class=SmartFormatter)
     parser.add_argument('-d', dest='domain', action='store', required=True, help='Domain to search')
     parser.add_argument('-e', dest='delay', action='store', type=float, default=7.0, help='Delay (in seconds) between searches.  If it\'s too small Google may block your IP, too big and your search may take a while.')
     parser.add_argument('-f', dest='saveLinks', action='store_true', default=False, help='Save the html links to html_links_<TIMESTAMP>.txt file')
@@ -153,7 +168,10 @@ if __name__ == "__main__":
     parser.add_argument('-o', dest='saveDirectory', action='store', default=os.getcwd(), help='Directory to save downloaded files (default is cwd, ".")')
     parser.add_argument('-r', dest='numThreads', action='store', type=int, default=8, help='Number of search threads (default is 8)')
     parser.add_argument('-t', dest='fileTypes', action='store', required=True, type=csv_list, help='Filetypes to download (pdf,doc,xls,ppt,odp,ods,docx,xlsx,pptx).  To search all 17,576 three-letter file extensions, type "ALL"')
-    parser.add_argument('-u', dest='randUserAgent', action='store_true', default=False, help='Randomize the user agent.  Default: Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)')
+    parser.add_argument('-u', dest='userAgent', nargs='?', default='Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)', help='R|User-Agent.\n'
+                                                                                                                                               'no -u = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"\n'
+                                                                                                                                               '-u = Randomize User-Agent\n'
+                                                                                                                                               '-u "My custom user agent 2.0" = Your customized User-Agent')
     parser.add_argument('-w', dest='downloadFiles', action='store_true', default=False, help='Download the files, instead of just viewing search results')
     args = parser.parse_args()
 
@@ -180,7 +198,7 @@ if __name__ == "__main__":
     if args.numThreads < 0:
         print("[!] Number of threads (-n) must be greater than 0")
         sys.exit()
-
+    
     #print(vars(args))
     mg = Metagoofil(**vars(args))
     mg.go()
