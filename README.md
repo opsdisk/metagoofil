@@ -67,7 +67,7 @@ Lastly, the `-r` switch allows you to specify the number of threads to use when 
 
 If that happens, just set the number of threads to 1...it will take longer but you will not get blocked.
 
-Added the `-u` user agent switch to randomize a user agent from user_agents.txt.  Otherwise, the default is 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'.
+Added the `-u` user agent switch to customize the User-Agent used to retrieve files.  If no `-u` is provided, then the User-Agent for every file download is 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'.  If only `-u` is provided, a random User-Agent from user_agents.txt will be picked for **each** file request.  Lastly, a custom User-Agent can be added by providing a string after the `-u`...for example `-u "My custom user agent 2.0"`.
 
 
 ##### Metadata Extraction
