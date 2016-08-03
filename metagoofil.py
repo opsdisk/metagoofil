@@ -4,7 +4,7 @@
 from __future__ import print_function
 
 import argparse
-import google  # https://pypi.python.org/pypi/google
+import google  # google >= 1.9.3, https://pypi.python.org/pypi/google
 import os
 import Queue
 import random
@@ -103,7 +103,7 @@ class Metagoofil:
             # Search for the files to download
             print("[*] Searching for " + str(self.searchMax) + " ." + filetype + " files and waiting " + str(self.delay) + " seconds between searches")
             query = "filetype:" + filetype + " site:" + self.domain
-            for url in google.search(query, start=0, stop=self.searchMax, num=100, pause=self.delay, extra_params={'filter': '0'}, randomizeUserAgent=True):
+            for url in google.search(query, start=0, stop=self.searchMax, num=100, pause=self.delay, extra_params={'filter': '0'}, user_agent=google.get_random_user_agent()):
                 self.files.append(url)
             
             # Since google.search method retreives URLs in batches of 100, ensure the file list only contains the requested amount
@@ -122,9 +122,10 @@ class Metagoofil:
             
             # Save links to output to file
             if self.saveLinks:
-                for file in self.files:
-                    self.htmlLinks.write(file + "\n")
-                self.f.close()
+                for f in self.files:
+                    self.htmlLinks.write(f + "\n")
+        
+        self.htmlLinks.close()
         
         if self.downloadFiles:
             print("[+] Total download: " + str(self.totalBytes) + " bytes / " + str(self.totalBytes / 1024) + " KB / " + str(self.totalBytes / (1024 * 1024)) + " MB")
@@ -164,7 +165,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', dest='domain', action='store', required=True, help='Domain to search')
     parser.add_argument('-e', dest='delay', action='store', type=float, default=7.0, help='Delay (in seconds) between searches.  If it\'s too small Google may block your IP, too big and your search may take a while.')
     parser.add_argument('-f', dest='saveLinks', action='store_true', default=False, help='Save the html links to html_links_<TIMESTAMP>.txt file')
-    parser.add_argument('-i', dest='urlTimeout', action='store', type=int, default=5, help='Number of seconds to wait before timeout for unreachable/stale pages (default 5)')
+    parser.add_argument('-i', dest='urlTimeout', action='store', type=int, default=15, help='Number of seconds to wait before timeout for unreachable/stale pages (default 15)')
     parser.add_argument('-l', dest='searchMax', action='store', type=int, default=100, help='Maximum results to search (default 100)')
     parser.add_argument('-n', dest='downloadFileLimit', default=100, action='store', type=int, help='Maximum number of files to download per filetype (default is 100)')    
     parser.add_argument('-o', dest='saveDirectory', action='store', default=os.getcwd(), help='Directory to save downloaded files (default is cwd, ".")')
