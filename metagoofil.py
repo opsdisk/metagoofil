@@ -61,6 +61,8 @@ class Metagoofil:
         self.domain = domain
         self.delay = delay
         self.saveLinks = saveLinks
+        if self.saveLinks:
+            self.htmlLinks = open('html_links_' + get_timestamp() + '.txt', 'a')
         self.urlTimeout = urlTimeout
         self.searchMax = searchMax
         self.downloadFileLimit = downloadFileLimit
@@ -81,6 +83,7 @@ class Metagoofil:
         self.downloadFiles = downloadFiles 
         self.totalBytes = 0
 
+        
     def go(self):
         # Kickoff the threadpool.
         for i in range(self.numThreads):
@@ -100,7 +103,7 @@ class Metagoofil:
             # Search for the files to download
             print("[*] Searching for " + str(self.searchMax) + " ." + filetype + " files and waiting " + str(self.delay) + " seconds between searches")
             query = "filetype:" + filetype + " site:" + self.domain
-            for url in google.search(query, start=0, stop=self.searchMax, num=100, pause=self.delay, extra_params={'filter': '0'}):
+            for url in google.search(query, start=0, stop=self.searchMax, num=100, pause=self.delay, extra_params={'filter': '0'}, randomizeUserAgent=True):
                 self.files.append(url)
             
             # Since google.search method retreives URLs in batches of 100, ensure the file list only contains the requested amount
@@ -119,9 +122,8 @@ class Metagoofil:
             
             # Save links to output to file
             if self.saveLinks:
-                self.f = open('html_links_' + get_timestamp() + '.txt', 'a')
                 for file in self.files:
-                    self.f.write(file + "\n")
+                    self.htmlLinks.write(file + "\n")
                 self.f.close()
         
         if self.downloadFiles:
@@ -168,7 +170,7 @@ if __name__ == "__main__":
     parser.add_argument('-o', dest='saveDirectory', action='store', default=os.getcwd(), help='Directory to save downloaded files (default is cwd, ".")')
     parser.add_argument('-r', dest='numThreads', action='store', type=int, default=8, help='Number of search threads (default is 8)')
     parser.add_argument('-t', dest='fileTypes', action='store', required=True, type=csv_list, help='Filetypes to download (pdf,doc,xls,ppt,odp,ods,docx,xlsx,pptx).  To search all 17,576 three-letter file extensions, type "ALL"')
-    parser.add_argument('-u', dest='userAgent', nargs='?', default='Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)', help='R|User-Agent.\n'
+    parser.add_argument('-u', dest='userAgent', nargs='?', default='Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)', help='R|User-Agent for file retrieval against -d domain.\n'
                                                                                                                                                'no -u = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"\n'
                                                                                                                                                '-u = Randomize User-Agent\n'
                                                                                                                                                '-u "My custom user agent 2.0" = Your customized User-Agent')
