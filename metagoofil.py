@@ -32,7 +32,7 @@ class Worker(threading.Thread):
                     request.add_header('User-Agent', 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)')
                 # -u
                 elif mg.user_agent is None:
-                    request.add_header('User-Agent', random.choice(mg.randomuser_agents))
+                    request.add_header('User-Agent', random.choice(mg.random_user_agents))
                 # -u "My custom user agent 2.0"
                 else:
                     request.add_header('User-Agent', mg.user_agent)
@@ -47,7 +47,7 @@ class Worker(threading.Thread):
                     fp.write(response.read())
                     fp.close()
 
-                mg.totalBytes += size
+                mg.total_bytes += size
 
             except:
                 print("[-] Timed out after " + str(mg.url_timeout) + " seconds...can't reach url: " + url)
@@ -62,7 +62,7 @@ class Metagoofil:
         self.delay = delay
         self.save_links = save_links
         if self.save_links:
-            self.htmlLinks = open('html_links_' + get_timestamp() + '.txt', 'a')
+            self.html_links = open('html_links_' + get_timestamp() + '.txt', 'a')
         self.url_timeout = url_timeout
         self.search_max = search_max
         self.download_file_limit = download_file_limit
@@ -78,10 +78,10 @@ class Metagoofil:
         # Populate a list of random User-Agents
         if self.user_agent is None:
             with open('user_agents.txt') as fp:
-                self.randomuser_agents = fp.readlines()
+                self.random_user_agents = fp.readlines()
 
         self.download_files = download_files
-        self.totalBytes = 0
+        self.total_bytes = 0
 
     def go(self):
         # Kickoff the threadpool.
@@ -122,12 +122,12 @@ class Metagoofil:
             # Save links to output to file
             if self.save_links:
                 for f in self.files:
-                    self.htmlLinks.write(f + "\n")
+                    self.html_links.write(f + "\n")
 
-        self.htmlLinks.close()
+        self.html_links.close()
 
         if self.download_files:
-            print("[+] Total download: " + str(self.totalBytes) + " bytes / " + str(self.totalBytes / 1024) + " KB / " + str(self.totalBytes / (1024 * 1024)) + " MB")
+            print("[+] Total download: " + str(self.total_bytes) + " bytes / " + str(self.total_bytes / 1024) + " KB / " + str(self.total_bytes / (1024 * 1024)) + " MB")
 
     def download(self):
         self.counter = 1
