@@ -43,7 +43,7 @@ class Worker(threading.Thread):
                 size = int(response.headers["Content-Length"])
                 print("[+] Downloading file - [" + str(size) + " bytes] " + url)
                 filename = str(url.split("/")[-1])
-                with open(mg.save_directory + "/" + filename, 'wb') as fp:
+                with open(os.path.join(mg.save_directory, filename), 'wb') as fp:
                     fp.write(response.read())
                     fp.close()
 
