@@ -1,56 +1,67 @@
 #!/usr/bin/env python
 # GPL v 2.0 License
 # Opsdisk LLC | opsdisk.com
-from __future__ import print_function
-
 import argparse
-import google  # google >= 1.9.3, https://pypi.python.org/pypi/google
 import os
-import Queue
+import queue
 import random
 import sys
 import threading
 import time
-import urllib2
+
+import googlesearch
+import requests
+
+# https://stackoverflow.com/questions/27981545/suppress-insecurerequestwarning-unverified-https-request-is-being-made-in-pytho
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
-class Worker(threading.Thread):
+class DownloadWorker(threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self)
 
     def run(self):
         while True:
-            # Grab URL off the queue
+            # Grab URL off the queue.
             url = mg.queue.get()
             try:
-                request = urllib2.Request(url)
+                headers = {}
 
-                # Assign a User-Agent
+                # Assign a User-Agent.
                 # No -u
                 if mg.user_agent == 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)':
-                    request.add_header('User-Agent', 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)')
+                    headers['User-Agent'] = 'User-Agent', 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
                 # -u
                 elif mg.user_agent is None:
-                    request.add_header('User-Agent', random.choice(mg.random_user_agents))
+                    headers['User-Agent'] = random.choice(mg.random_user_agents)
                 # -u "My custom user agent 2.0"
                 else:
-                    request.add_header('User-Agent', mg.user_agent)
+                    headers['User-Agent'] = mg.user_agent
 
-                response = urllib2.urlopen(request, timeout=mg.url_timeout)
+                response = requests.get(url, headers=headers, verify=False, timeout=mg.url_timeout, stream=True)
 
-                # Download the file
-                size = int(response.headers["Content-Length"])
-                print("[+] Downloading file - [" + str(size) + " bytes] " + url)
-                filename = str(url.split("/")[-1])
-                with open(os.path.join(mg.save_directory, filename), 'wb') as fp:
-                    fp.write(response.read())
-                    fp.close()
+                # Download the file.
+                if response.status_code == 200:
+                    size = int(response.headers["Content-Length"])
+                    print("[+] Downloading file - [{0} bytes] {1}".format(size, url))
 
-                mg.total_bytes += size
+                    # Extract file name.
+                    filename = str(url.split("/")[-1])
+
+                    with open(filename, "wb") as fh:
+                        for chunk in response.iter_content(chunk_size=1024):
+                            if chunk:  # Filter out keep-alive new chunks.
+                                fh.write(chunk)
+
+                    mg.total_bytes += size
+
+                else:
+                    print("[-] URL {0} return HTTP code {1}".format(url, response.status_code))
 
             except:
-                print("[-] Timed out after " + str(mg.url_timeout) + " seconds...can't reach url: " + url)
+                print("[-] Timed out after {0} seconds...can't reach url: {1}".format(mg.url_timeout, url))
 
             mg.queue.task_done()
 
@@ -69,7 +80,7 @@ class Metagoofil:
         self.save_directory = save_directory
 
         # Create queue and specify the number of worker threads.
-        self.queue = Queue.Queue()
+        self.queue = queue.Queue()
         self.number_of_threads = number_of_threads
 
         self.file_types = file_types
@@ -86,40 +97,41 @@ class Metagoofil:
     def go(self):
         # Kickoff the threadpool.
         for i in range(self.number_of_threads):
-            thread = Worker()
+            thread = DownloadWorker()
             thread.daemon = True
             thread.start()
 
         if "ALL" in self.file_types:
             from itertools import product
             from string import ascii_lowercase
-            # Generate all three letter combinations
+
+            # Generate all three letter combinations.
             self.file_types = [''.join(i) for i in product(ascii_lowercase, repeat=3)]
 
         for filetype in self.file_types:
-            self.files = []  # Stores URLs with files, clear out for each filetype
+            self.files = []  # Stores URLs with files, clear out for each filetype.
 
             # Search for the files to download
             print("[*] Searching for " + str(self.search_max) + " ." + filetype + " files and waiting " + str(self.delay) + " seconds between searches")
             query = "filetype:" + filetype + " site:" + self.domain
-            for url in google.search(query, start=0, stop=self.search_max, num=100, pause=self.delay, extra_params={'filter': '0'}, user_agent=google.get_random_user_agent()):
+            for url in googlesearch.search(query, start=0, stop=self.search_max, num=100, pause=self.delay, extra_params={'filter': '0'}, user_agent=self.user_agent):
                 self.files.append(url)
 
-            # Since google.search method retreives URLs in batches of 100, ensure the file list only contains the requested amount
+            # Since googlesearch.search method retreives URLs in batches of 100, ensure the file list only contains the requested amount.
             if len(self.files) > self.search_max:
                 self.files = self.files[:-(len(self.files) - self.search_max)]
 
-            # Download files if specified with -w switch
+            # Download files if specified with -w switch.
             if self.download_files:
                 self.download()
 
-            # Otherwise, just display them
+            # Otherwise, just display them.
             else:
-                print("[*] Results: " + str(len(self.files)) + " ." + filetype + " files found")
+                print("[*] Results: {0} .{1} files found".format(len(self.files), filetype))
                 for file in self.files:
                     print(file)
 
-            # Save links to output to file
+            # Save links to output to file.
             if self.save_links:
                 for f in self.files:
                     self.html_links.write(f + "\n")
@@ -127,7 +139,7 @@ class Metagoofil:
         self.html_links.close()
 
         if self.download_files:
-            print("[+] Total download: " + str(self.total_bytes) + " bytes / " + str(self.total_bytes / 1024) + " KB / " + str(self.total_bytes / (1024 * 1024)) + " MB")
+            print("[+] Total download: {0} bytes / {1} KB / {2} MB".format(self.total_bytes, self.total_bytes / 1024, self.total_bytes / (1024 * 1024)))
 
     def download(self):
         self.counter = 1
@@ -158,23 +170,24 @@ class SmartFormatter(argparse.HelpFormatter):
         # This is the RawTextHelpFormatter._split_lines
         return argparse.HelpFormatter._split_lines(self, text, width)
 
+
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='Metagoofil - Search and Download file_types', formatter_class=SmartFormatter)
-    parser.add_argument('-d', dest='domain', action='store', required=True, help='Domain to search')
-    parser.add_argument('-e', dest='delay', action='store', type=float, default=7.0, help='Delay (in seconds) between searches.  If it\'s too small Google may block your IP, too big and your search may take a while.')
-    parser.add_argument('-f', dest='save_links', action='store_true', default=False, help='Save the html links to html_links_<TIMESTAMP>.txt file')
-    parser.add_argument('-i', dest='url_timeout', action='store', type=int, default=15, help='Number of seconds to wait before timeout for unreachable/stale pages (default 15)')
-    parser.add_argument('-l', dest='search_max', action='store', type=int, default=100, help='Maximum results to search (default 100)')
-    parser.add_argument('-n', dest='download_file_limit', default=100, action='store', type=int, help='Maximum number of files to download per filetype (default is 100)')
-    parser.add_argument('-o', dest='save_directory', action='store', default=os.getcwd(), help='Directory to save downloaded files (default is cwd, ".")')
-    parser.add_argument('-r', dest='number_of_threads', action='store', type=int, default=8, help='Number of search threads (default is 8)')
+    parser = argparse.ArgumentParser(description='Metagoofil - Search and download specific filtypes', formatter_class=SmartFormatter)
+    parser.add_argument('-d', dest='domain', action='store', required=True, help='Domain to search.')
+    parser.add_argument('-e', dest='delay', action='store', type=float, default=30.0, help='Delay (in seconds) between searches.  If it\'s too small Google may block your IP, too big and your search may take a while.  DEFAULT: 30.0')
+    parser.add_argument('-f', dest='save_links', action='store_true', default=False, help='Save the html links to html_links_<TIMESTAMP>.txt file.')
+    parser.add_argument('-i', dest='url_timeout', action='store', type=int, default=15, help='Number of seconds to wait before timeout for unreachable/stale pages.  DEFAULT: 15')
+    parser.add_argument('-l', dest='search_max', action='store', type=int, default=100, help='Maximum results to search.  DEFAULT: 100')
+    parser.add_argument('-n', dest='download_file_limit', default=100, action='store', type=int, help='Maximum number of files to download per filetype.  DEFAULT: 100')
+    parser.add_argument('-o', dest='save_directory', action='store', default=os.getcwd(), help='Directory to save downloaded files.  DEFAULT is cwd, "."')
+    parser.add_argument('-r', dest='number_of_threads', action='store', type=int, default=8, help='Number of search threads.  DEFAULT: 8')
     parser.add_argument('-t', dest='file_types', action='store', required=True, type=csv_list, help='file_types to download (pdf,doc,xls,ppt,odp,ods,docx,xlsx,pptx).  To search all 17,576 three-letter file extensions, type "ALL"')
     parser.add_argument('-u', dest='user_agent', nargs='?', default='Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)', help='R|User-Agent for file retrieval against -d domain.\n'
                                                                                                                                                      'no -u = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"\n'
                                                                                                                                                      '-u = Randomize User-Agent\n'
                                                                                                                                                      '-u "My custom user agent 2.0" = Your customized User-Agent')
-    parser.add_argument('-w', dest='download_files', action='store_true', default=False, help='Download the files, instead of just viewing search results')
+    parser.add_argument('-w', dest='download_files', action='store_true', default=False, help='Download the files, instead of just viewing search results.')
     args = parser.parse_args()
 
     if not args.domain:
