@@ -119,8 +119,8 @@ class Metagoofil:
             self.files = []  # Stores URLs with files, clear out for each filetype.
 
             # Search for the files to download
-            print("[*] Searching for " + str(self.search_max) + " ." + filetype + " files and waiting " + str(self.delay) + " seconds between searches")
-            query = "filetype:" + filetype + " site:" + self.domain
+            print("[*] Searching for {0} .{1} files and waiting {2} seconds between searches".format(self.search_max, filetype, self.delay))
+            query = "filetype:{0} site:{1}".format(filetype, self.domain)
             for url in googlesearch.search(query, start=0, stop=self.search_max, num=100, pause=self.delay, extra_params={'filter': '0'}, user_agent=self.user_agent):
                 self.files.append(url)
 
@@ -135,8 +135,8 @@ class Metagoofil:
             # Otherwise, just display them.
             else:
                 print("[*] Results: {0} .{1} files found".format(len(self.files), filetype))
-                for file in self.files:
-                    print(file)
+                for file_name in self.files:
+                    print(file_name)
 
             # Save links to output to file.
             if self.save_links:
