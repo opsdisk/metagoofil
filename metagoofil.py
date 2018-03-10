@@ -26,13 +26,14 @@ class DownloadWorker(threading.Thread):
         while True:
             # Grab URL off the queue.
             url = mg.queue.get()
+
             try:
                 headers = {}
 
-                # Assign a User-Agent.
+                # Assign a User-Agent for each file request.
                 # No -u
                 if mg.user_agent == 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)':
-                    headers['User-Agent'] = 'User-Agent', 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+                    headers['User-Agent'] = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
                 # -u
                 elif mg.user_agent is None:
                     headers['User-Agent'] = random.choice(mg.random_user_agents)
@@ -44,24 +45,30 @@ class DownloadWorker(threading.Thread):
 
                 # Download the file.
                 if response.status_code == 200:
-                    size = int(response.headers["Content-Length"])
+                    try:
+                        size = int(response.headers["Content-Length"])
+
+                    except KeyError as e:
+                        print("[-] Exception for url: {0} -- {1} does not exist.  Extracting file size from response.content length.".format(url, e))
+                        size = len(response.content)
+
+                    mg.total_bytes += size
+
                     print("[+] Downloading file - [{0} bytes] {1}".format(size, url))
 
                     # Extract file name.
                     filename = str(url.split("/")[-1])
 
-                    with open(filename, "wb") as fh:
+                    with open(os.path.join(mg.save_directory, filename), "wb") as fh:
                         for chunk in response.iter_content(chunk_size=1024):
                             if chunk:  # Filter out keep-alive new chunks.
                                 fh.write(chunk)
 
-                    mg.total_bytes += size
-
                 else:
-                    print("[-] URL {0} return HTTP code {1}".format(url, response.status_code))
+                    print("[-] URL {0} returned HTTP code {1}".format(url, response.status_code))
 
-            except:
-                print("[-] Timed out after {0} seconds...can't reach url: {1}".format(mg.url_timeout, url))
+            except requests.exceptions.RequestException as e:
+                print("[-] Exception for url: {0} -- {1}".format(url, e))
 
             mg.queue.task_done()
 
@@ -139,7 +146,7 @@ class Metagoofil:
         self.html_links.close()
 
         if self.download_files:
-            print("[+] Total download: {0} bytes / {1} KB / {2} MB".format(self.total_bytes, self.total_bytes / 1024, self.total_bytes / (1024 * 1024)))
+            print("[+] Total download: {0} bytes / {1:.2f} KB / {2:.2f} MB".format(self.total_bytes, self.total_bytes / 1024, self.total_bytes / (1024 * 1024)))
 
     def download(self):
         self.counter = 1
@@ -200,9 +207,9 @@ if __name__ == "__main__":
         print("[+] Adding -w for you")
         args.download_files = True
     if args.save_directory:
-        print("[*] Downloaded files will be saved here: " + args.save_directory)
+        print("[*] Downloaded files will be saved here: {0}".format(args.save_directory))
         if not os.path.exists(args.save_directory):
-            print("[+] Creating folder: " + args.save_directory)
+            print("[+] Creating folder: {0}".format(args.save_directory))
             os.mkdir(args.save_directory)
     if args.delay < 0:
         print("[!] Delay must be greater than 0")
@@ -214,7 +221,7 @@ if __name__ == "__main__":
         print("[!] Number of threads (-n) must be greater than 0")
         sys.exit()
 
-    #print(vars(args))
+    # print(vars(args))
     mg = Metagoofil(**vars(args))
     mg.go()
 
