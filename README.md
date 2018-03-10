@@ -5,6 +5,14 @@ One of the best tools for conducting document and metadata reconnaissance during
 ##### tl;dr
 New code is here, take it for a spin: https://github.com/opsdisk/metagoofil
 
+##### Installation
+
+Clone the git repository and install the requirements
+
+```
+pip install -r requirements.txt
+```
+
 ##### metagoofil
 There are two parts to metagoofil.  The first part is the ability to search Google for specific types of files being publicly hosted on a domain and download them to your local box.  For instance, it uses this Google query to find all the .pdf files being hosted on example.com and downloads a local copy
 
@@ -19,13 +27,15 @@ I rewrote the Google search and download functionality.  The original metagoofil
     [1/10] /webhp?hl=en
         [x] Error downloading /webhp?hl=en
 
-There is a python package, appropriately called "google", https://pypi.python.org/pypi/google), that will abstract the searching and returning of valid URLs.  
+There is a python package, appropriately called "google" (https://pypi.python.org/pypi/google) that abstracts the searching and returning of valid URLs.  
 
-The `google` package can be installed using pip
+The `googlesearch` package can be installed using pip
 
-    pip install google
+```
+pip install -r requirements.txt
+```
 
-The full `google` package documentation can be found [here](http://pythonhosted.org/google/), but the parameters we care about are:
+The full `googlesearch` package documentation can be found [here](http://pythonhosted.org/google/), but the parameters we care about are:
 
     query (str) - Query string. Must NOT be url-encoded.
     num (int) - Number of results per page.
@@ -37,12 +47,12 @@ The code snippet below from the updated metagoofil.py takes care of searching Go
 
 ```python
 query = "filetype:" + filetype + " site:" + self.domain
-for url in google.search(query, start=0, stop=self.searchMax, num=100, pause=self.delay):
-    files.append(url)
-            
-# Since google.search method retreives URLs in batches of 100, ensure the file list only contains the requested amount
-if len(self.files) > self.searchMax:
-    self.files = self.files[:-(len(self.files) - self.searchMax)]
+for url in googlesearch.search(query, start=0, stop=self.search_max, num=100, pause=self.delay, extra_params={'filter': '0'}, user_agent=googlesearch.get_random_user_agent()):
+    self.files.append(url)
+
+# Since googlesearch.search method retreives URLs in batches of 100, ensure the file list only contains the requested amount
+if len(self.files) > self.search_max:
+    self.files = self.files[:-(len(self.files) - self.search_max)]
 ```
 
 I hardcoded the `num` parameter to return the most results per page, and just trim off any extra URLs if the user is seeking less than 100 results.
@@ -51,7 +61,7 @@ This package will handle all the logic and heavy lifting of accurately searching
 
 The remaining updates deal with the switches.  The same switches were kept as in the original metagoofil to avoid confusion, with new ones also added.  
 
-The `-f` switch writes all the links to a date-time stamped .txt file instead of an HTML file.  This allows for quick copy/paste or as an input file for other downloading binaries like curl and wget.
+The `-f` switch writes all the links to a date-time stamped .txt file instead of an HTML file.  This allows for quick copy/paste or as an input file for other downloading binaries like curl or wget.
 
 For grins, another addition is that the `-t` file type switch recognizes "ALL" which will search all 17,576 three-letter file extensions.  A search would likely take a while and you should plan accordingly.
 
@@ -74,11 +84,9 @@ Added the `-u` user agent switch to customize the User-Agent used to retrieve fi
 
 Metagoofil is supposed to allow local file metadata analysis, using the `-h yes` switch, but it doesn't usually work for me if I'm running it after acquiring the files. Currently, I use `exiftool` to extract any metadata I care about in files and it's good enough.
 
-    exiftool -r *.doc | egrep -i "Author|Creator|Email|Producer|Template" | sort -u
-
-##### Future Work
-I'll be taking a look at the metadata analysis part to see if that can be improved and streamlined.  Or I may just incorporate the native exiftool to display the results.  Either way, I'll eventually submit a pull request to the Edge-Security folks to see if they like the updates.  
+```
+exiftool -r *.doc | egrep -i "Author|Creator|Email|Producer|Template" | sort -u
+```
 
 ##### Conclusion
-All of the code can be found on the Opsdisk Github repository here: https://github.com/opsdisk/metagoofil.  Comments, suggestions, and improvements are always welcome.  Be sure to follow [@opsdisk](https://twitter.com/opsdisk) on Twitter for the latest updates. 
- 
+All of the code can be found on the Opsdisk Github repository here: https://github.com/opsdisk/metagoofil.  Comments, suggestions, and improvements are always welcome.  Be sure to follow [@opsdisk](https://twitter.com/opsdisk) on Twitter for the latest updates.

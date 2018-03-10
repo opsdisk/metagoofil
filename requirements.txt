@@ -1,1 +1,2 @@
-google >= 1.9.3
+google >= 2.0.1
+requests >= 2.18.4
