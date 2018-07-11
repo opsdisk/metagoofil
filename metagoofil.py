@@ -57,7 +57,11 @@ class DownloadWorker(threading.Thread):
                     print("[+] Downloading file - [{0} bytes] {1}".format(size, url))
 
                     # Extract file name.
-                    filename = str(url.split("/")[-1])
+                    url_parts = url.split("/")
+                    filename = str(url_parts[-1])
+
+                    if not filename:
+                        filename = str(url_parts[-2])
 
                     with open(os.path.join(mg.save_directory, filename), "wb") as fh:
                         for chunk in response.iter_content(chunk_size=1024):
