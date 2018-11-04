@@ -37,7 +37,7 @@ class DownloadWorker(threading.Thread):
                     headers["User-Agent"] = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
                 # -u
                 elif mg.user_agent is None:
-                    headers["User-Agent"] = random.choice(mg.random_user_agents)
+                    headers["User-Agent"] = "{}".format(random.choice(mg.random_user_agents).strip())
                 # -u "My custom user agent 2.0"
                 else:
                     headers["User-Agent"] = mg.user_agent
@@ -176,7 +176,7 @@ class Metagoofil:
 
         if self.download_files:
             print(
-                "[+] Total download: {} bytes / {1:.2f} KB / {2:.2f} MB".format(
+                "[+] Total download: {} bytes / {:.2f} KB / {:.2f} MB".format(
                     self.total_bytes, self.total_bytes / 1024, self.total_bytes / (1024 * 1024)
                 )
             )
