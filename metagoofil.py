@@ -142,8 +142,8 @@ class Metagoofil:
             if self.save_links:
                 for f in self.files:
                     self.html_links.write(f + "\n")
-
-        self.html_links.close()
+        if self.save_links:
+            self.html_links.close()
 
         if self.download_files:
             print("[+] Total download: {0} bytes / {1:.2f} KB / {2:.2f} MB".format(self.total_bytes, self.total_bytes / 1024, self.total_bytes / (1024 * 1024)))
