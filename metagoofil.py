@@ -137,7 +137,7 @@ class Metagoofil:
 
         for filetype in self.file_types:
             # Stores URLs with files, clear out for each filetype.
-            # self.files = []
+            self.files = []
 
             # Search for the files to download.
             print(
