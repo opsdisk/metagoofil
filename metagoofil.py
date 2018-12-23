@@ -1,7 +1,6 @@
 #!/usr/bin/env python
-# GPL v 2.0 License
-# Opsdisk LLC | opsdisk.com
 
+# Standard Python libraries.
 import argparse
 import os
 import queue
@@ -10,6 +9,9 @@ import sys
 import threading
 import time
 
+# Third party Python libraries.
+# google == 2.0.1, module author changed import name to googlesearch
+# https://github.com/MarioVilas/googlesearch/commit/92309f4f23a6334a83c045f7c51f87b904e7d61d
 import googlesearch
 import requests
 
@@ -37,7 +39,8 @@ class DownloadWorker(threading.Thread):
                     headers["User-Agent"] = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
                 # -u
                 elif mg.user_agent is None:
-                    headers["User-Agent"] = "{}".format(random.choice(mg.random_user_agents).strip())
+                    user_agent_choice = random.choice(mg.random_user_agents).strip()
+                    headers["User-Agent"] = f"{user_agent_choice}"
                 # -u "My custom user agent 2.0"
                 else:
                     headers["User-Agent"] = mg.user_agent
@@ -51,15 +54,13 @@ class DownloadWorker(threading.Thread):
 
                     except KeyError as e:
                         print(
-                            "[-] Exception for url: {} -- {} does not exist.  Extracting file size from response.content length.".format(
-                                url, e
-                            )
+                            f"[-] Exception for url: {url} -- {e} does not exist.  Extracting file size from response.content length."
                         )
                         size = len(response.content)
 
                     mg.total_bytes += size
 
-                    print("[+] Downloading file - [{} bytes] {}".format(size, url))
+                    print(f"[+] Downloading file - [{size} bytes] {url}")
 
                     # Strip any trailing /'s before extracting file name.
                     filename = str(url.strip("/").split("/")[-1])
@@ -70,15 +71,17 @@ class DownloadWorker(threading.Thread):
                                 fh.write(chunk)
 
                 else:
-                    print("[-] URL {} returned HTTP code {}".format(url, response.status_code))
+                    print(f"[-] URL {url} returned HTTP code {response.status_code}")
 
             except requests.exceptions.RequestException as e:
-                print("[-] Exception for url: {} -- {}".format(url, e))
+                print(f"[-] Exception for url: {url} -- {e}")
 
             mg.queue.task_done()
 
 
 class Metagoofil:
+    """The Metagoofil Class"""
+
     def __init__(
         self,
         domain,
@@ -97,7 +100,7 @@ class Metagoofil:
         self.delay = delay
         self.save_links = save_links
         if self.save_links:
-            self.html_links = open("html_links_{}.txt".format(get_timestamp()), "a")
+            self.html_links = open(f"html_links_{get_timestamp()}.txt", "a")
         self.url_timeout = url_timeout
         self.search_max = search_max
         self.download_file_limit = download_file_limit
@@ -110,7 +113,7 @@ class Metagoofil:
         self.file_types = file_types
 
         self.user_agent = user_agent
-        # Populate a list of random User-Agents
+        # Populate a list of random User-Agents.
         if self.user_agent is None:
             with open("user_agents.txt") as fp:
                 self.random_user_agents = fp.readlines()
@@ -133,15 +136,14 @@ class Metagoofil:
             self.file_types = ["".join(i) for i in product(ascii_lowercase, repeat=3)]
 
         for filetype in self.file_types:
-            self.files = []  # Stores URLs with files, clear out for each filetype.
+            # Stores URLs with files, clear out for each filetype.
+            # self.files = []
 
-            # Search for the files to download
+            # Search for the files to download.
             print(
-                "[*] Searching for {} .{} files and waiting {} seconds between searches".format(
-                    self.search_max, filetype, self.delay
-                )
+                f"[*] Searching for {self.search_max} .{filetype} files and waiting {self.delay} seconds between searches"
             )
-            query = "filetype:{} site:{}".format(filetype, self.domain)
+            query = f"filetype:{filetype} site:{self.domain}"
             for url in googlesearch.search(
                 query,
                 start=0,
@@ -153,7 +155,7 @@ class Metagoofil:
             ):
                 self.files.append(url)
 
-            # Since googlesearch.search method retreives URLs in batches of 100, ensure the file list only contains the requested amount.
+            # Since googlesearch.search method retrieves URLs in batches of 100, ensure the file list only contains the requested amount.
             if len(self.files) > self.search_max:
                 self.files = self.files[: -(len(self.files) - self.search_max)]
 
@@ -163,14 +165,14 @@ class Metagoofil:
 
             # Otherwise, just display them.
             else:
-                print("[*] Results: {} .{} files found".format(len(self.files), filetype))
+                print(f"[*] Results: {len(self.files)} .{filetype} files found")
                 for file_name in self.files:
                     print(file_name)
 
             # Save links to output to file.
             if self.save_links:
                 for f in self.files:
-                    self.html_links.write(f + "\n")
+                    self.html_links.write(f"{f}\n")
         if self.save_links:
             self.html_links.close()
 
@@ -213,7 +215,7 @@ class SmartFormatter(argparse.HelpFormatter):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
-        description="Metagoofil - Search and download specific filtypes", formatter_class=SmartFormatter
+        description="Metagoofil - Search and download specific filetypes", formatter_class=SmartFormatter
     )
     parser.add_argument("-d", dest="domain", action="store", required=True, help="Domain to search.")
     parser.add_argument(
@@ -302,9 +304,9 @@ if __name__ == "__main__":
         print("[+] Adding -w for you")
         args.download_files = True
     if args.save_directory:
-        print("[*] Downloaded files will be saved here: {}".format(args.save_directory))
+        print(f"[*] Downloaded files will be saved here: {args.save_directory}")
         if not os.path.exists(args.save_directory):
-            print("[+] Creating folder: {}".format(args.save_directory))
+            print(f"[+] Creating folder: {args.save_directory}")
             os.mkdir(args.save_directory)
     if args.delay < 0:
         print("[!] Delay must be greater than 0")
