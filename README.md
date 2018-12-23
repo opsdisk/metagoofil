@@ -3,18 +3,20 @@
 One of the best tools for conducting document and metadata reconnaissance during a pen test is [metagoofil](http://www.edge-security.com/metagoofil.php), written by Christian Martorella [@laramies](http://twitter.com/laramies) of the [Edge-Security Group](http://www.edge-security.com/).  The source code can be found here: [https://github.com/laramies/metagoofil](https://github.com/laramies/metagoofil), but it comes with Kali by default.  The tool hasn't been updated in a couple of years and could use some TLC.
 
 ##### tl;dr
-New code is here, take it for a spin: https://github.com/opsdisk/metagoofil
+
+New code is here, take it for a spin: <https://github.com/opsdisk/metagoofil>
 
 ##### Installation
 
 Clone the git repository and install the requirements
 
-```
-pip install -r requirements.txt
+```bash
+pip3 install -r requirements.txt
 ```
 
 ##### metagoofil
-There are two parts to metagoofil.  The first part is the ability to search Google for specific types of files being publicly hosted on a domain and download them to your local box.  For instance, it uses this Google query to find all the .pdf files being hosted on example.com and downloads a local copy
+
+There are two parts to Metagoofil.  The first part is the ability to search Google for specific types of files being publicly hosted on a domain and download them to your local box.  For instance, it uses this Google query to find all the .pdf files being hosted on example.com and downloads a local copy
 
      site:example.com filetype:pdf
 
@@ -22,17 +24,17 @@ The second part of metagoofil is metadata extraction which searches for users, s
 
 ##### File Download Rewrite
 
-I rewrote the Google search and download functionality.  The original metagoofil uses a custom googlesearch.py module which does not return legitimate or valid results all the time.  For example, it considers this a URL:
+I rewrote the Google search and download functionality.  The original metagoofil uses a custom `googlesearch.py` module which does not return legitimate or valid results all the time.  For example, it considers this a URL:
 
     [1/10] /webhp?hl=en
         [x] Error downloading /webhp?hl=en
 
-There is a python package, appropriately called "google" (https://pypi.python.org/pypi/google) that abstracts the searching and returning of valid URLs.  
+There is a python package, appropriately called "google" (<https://pypi.python.org/pypi/google>) that abstracts the searching and returning of valid URLs.  
 
 The `googlesearch` package can be installed using pip
 
-```
-pip install -r requirements.txt
+```bash
+pip3 install -r requirements.txt
 ```
 
 The full `googlesearch` package documentation can be found [here](http://pythonhosted.org/google/), but the parameters we care about are:
@@ -77,16 +79,16 @@ Lastly, the `-r` switch allows you to specify the number of threads to use when 
 
 If that happens, just set the number of threads to 1...it will take longer but you will not get blocked.
 
-Added the `-u` user agent switch to customize the User-Agent used to retrieve files.  If no `-u` is provided, then the User-Agent for every file download is 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'.  If only `-u` is provided, a random User-Agent from user_agents.txt will be picked for **each** file request.  Lastly, a custom User-Agent can be added by providing a string after the `-u`...for example `-u "My custom user agent 2.0"`.
-
+Added the `-u` user agent switch to customize the User-Agent used to retrieve files.  If no `-u` is provided, then the User-Agent for every file download is `Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)`.  If only `-u` is provided, a random User-Agent from user_agents.txt will be picked for **each** file request.  Lastly, a custom User-Agent can be added by providing a string after the `-u`...for example `-u "My custom user agent 2.0"`.
 
 ##### Metadata Extraction
 
 Metagoofil is supposed to allow local file metadata analysis, using the `-h yes` switch, but it doesn't usually work for me if I'm running it after acquiring the files. Currently, I use `exiftool` to extract any metadata I care about in files and it's good enough.
 
-```
+```bash
 exiftool -r *.doc | egrep -i "Author|Creator|Email|Producer|Template" | sort -u
 ```
 
 ##### Conclusion
-All of the code can be found on the Opsdisk Github repository here: https://github.com/opsdisk/metagoofil.  Comments, suggestions, and improvements are always welcome.  Be sure to follow [@opsdisk](https://twitter.com/opsdisk) on Twitter for the latest updates.
+
+All of the code can be found on the Opsdisk Github repository here: <https://github.com/opsdisk/metagoofil>.  Comments, suggestions, and improvements are always welcome.  Be sure to follow [@opsdisk](https://twitter.com/opsdisk) on Twitter for the latest updates.
