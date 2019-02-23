@@ -1,2 +1,4 @@
-google==2.0.1
-requests==2.20.0
+#google==2.0.2
+# Using git repo until 2.0.2 package is in PyPI
+-e git://github.com/MarioVilas/googlesearch.git#egg=googlesearch
+requests==2.21.0
