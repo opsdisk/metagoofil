@@ -11,7 +11,11 @@ New code is here, take it for a spin: <https://github.com/opsdisk/metagoofil>
 Clone the git repository and install the requirements
 
 ```bash
-pip3 install -r requirements.txt
+git clone https://github.com/opsdisk/metagoofil
+cd metagoofil
+virtualenv -p python3 .venv  # If using a virtual environment.
+source .venv/bin/activate  # If using a virtual environment.
+pip install -r requirements.txt
 ```
 
 ##### metagoofil
