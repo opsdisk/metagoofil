@@ -271,7 +271,7 @@ if __name__ == "__main__":
         action="store",
         type=int,
         default=8,
-        help="Number of search threads.  Default: 8",
+        help="Number of downloader threads.  Default: 8",
     )
     parser.add_argument(
         "-t",
