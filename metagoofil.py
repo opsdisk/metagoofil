@@ -54,7 +54,8 @@ class DownloadWorker(threading.Thread):
 
                     except KeyError as e:
                         print(
-                            f"[-] Exception for url: {url} -- {e} does not exist.  Extracting file size from response.content length."
+                            f"[-] Exception for url: {url} -- {e} does not exist.  Extracting file size from "
+                            "response.content length."
                         )
                         size = len(response.content)
 
@@ -155,7 +156,8 @@ class Metagoofil:
             ):
                 self.files.append(url)
 
-            # Since googlesearch.search method retrieves URLs in batches of 100, ensure the file list only contains the requested amount.
+            # Since googlesearch.search method retrieves URLs in batches of 100, ensure the file list only contains the
+            # requested amount.
             if len(self.files) > self.search_max:
                 self.files = self.files[: -(len(self.files) - self.search_max)]
 
@@ -173,6 +175,7 @@ class Metagoofil:
             if self.save_links:
                 for f in self.files:
                     self.html_links.write(f"{f}\n")
+
         if self.save_links:
             self.html_links.close()
 
@@ -224,7 +227,10 @@ if __name__ == "__main__":
         action="store",
         type=float,
         default=30.0,
-        help="Delay (in seconds) between searches.  If it's too small Google may block your IP, too big and your search may take a while.  DEFAULT: 30.0",
+        help=(
+            "Delay (in seconds) between searches.  If it's too small Google may block your IP, too big and your search"
+            "may take a while.  Default: 30.0"
+        ),
     )
     parser.add_argument(
         "-f",
@@ -239,10 +245,10 @@ if __name__ == "__main__":
         action="store",
         type=int,
         default=15,
-        help="Number of seconds to wait before timeout for unreachable/stale pages.  DEFAULT: 15",
+        help="Number of seconds to wait before timeout for unreachable/stale pages.  Default: 15",
     )
     parser.add_argument(
-        "-l", dest="search_max", action="store", type=int, default=100, help="Maximum results to search.  DEFAULT: 100"
+        "-l", dest="search_max", action="store", type=int, default=100, help="Maximum results to search.  Default: 100"
     )
     parser.add_argument(
         "-n",
@@ -250,14 +256,14 @@ if __name__ == "__main__":
         default=100,
         action="store",
         type=int,
-        help="Maximum number of files to download per filetype.  DEFAULT: 100",
+        help="Maximum number of files to download per filetype.  Default: 100",
     )
     parser.add_argument(
         "-o",
         dest="save_directory",
         action="store",
         default=os.getcwd(),
-        help='Directory to save downloaded files.  DEFAULT is cwd, "."',
+        help='Directory to save downloaded files.  Default is current working directory, "."',
     )
     parser.add_argument(
         "-r",
@@ -265,7 +271,7 @@ if __name__ == "__main__":
         action="store",
         type=int,
         default=8,
-        help="Number of search threads.  DEFAULT: 8",
+        help="Number of search threads.  Default: 8",
     )
     parser.add_argument(
         "-t",
@@ -273,7 +279,10 @@ if __name__ == "__main__":
         action="store",
         required=True,
         type=csv_list,
-        help='file_types to download (pdf,doc,xls,ppt,odp,ods,docx,xlsx,pptx).  To search all 17,576 three-letter file extensions, type "ALL"',
+        help=(
+            "file_types to download (pdf,doc,xls,ppt,odp,ods,docx,xlsx,pptx).  To search all 17,576 three-letter "
+            'file extensions, type "ALL"'
+        ),
     )
     parser.add_argument(
         "-u",
@@ -296,27 +305,33 @@ if __name__ == "__main__":
 
     if not args.domain:
         print("[!] Specify a domain with -d")
-        sys.exit()
+        sys.exit(0)
+
     if not args.file_types:
         print("[!] Specify file types with -t")
-        sys.exit()
+        sys.exit(0)
+
     if (args.download_file_limit > 0) and (args.download_files is False):
         print("[+] Adding -w for you")
         args.download_files = True
+
     if args.save_directory:
         print(f"[*] Downloaded files will be saved here: {args.save_directory}")
         if not os.path.exists(args.save_directory):
             print(f"[+] Creating folder: {args.save_directory}")
             os.mkdir(args.save_directory)
+
     if args.delay < 0:
         print("[!] Delay must be greater than 0")
-        sys.exit()
+        sys.exit(0)
+
     if args.url_timeout < 0:
         print("[!] URL timeout (-i) must be greater than 0")
-        sys.exit()
+        sys.exit(0)
+
     if args.number_of_threads < 0:
         print("[!] Number of threads (-n) must be greater than 0")
-        sys.exit()
+        sys.exit(0)
 
     # print(vars(args))
     mg = Metagoofil(**vars(args))
