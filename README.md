@@ -27,7 +27,7 @@ pip install -r requirements.txt
 ## metagoofil
 
 There are two parts to Metagoofil.  The first part is the ability to search Google for specific types of files being
-publicly hosted on a domain and download them to your local box.  For instance, it uses this Google query to find all 
+publicly hosted on a domain and download them to your local box.  For instance, it uses this Google query to find all
 the .pdf files being hosted on example.com and downloads a local copy
 
 ```none
