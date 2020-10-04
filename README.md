@@ -24,6 +24,15 @@ source .venv/bin/activate  # If using a virtual environment.
 pip install -r requirements.txt
 ```
 
+## Docker Installation & Usage
+```bash
+git clone https://github.com/opsdisk/metagoofil
+cd metagoofil
+docker build -t metagoofil .
+# This will save the files in your current directory.
+docker run -v $PWD:/data metagoofil -d kali.org -t pdf
+```
+
 ## metagoofil
 
 There are two parts to Metagoofil.  The first part is the ability to search Google for specific types of files being
