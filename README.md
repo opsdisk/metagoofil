@@ -36,8 +36,8 @@ apt install proxychains4 -y
 ```
 
 Edit the `/etc/proxychains4.conf` configuration file to round robin the look ups through different proxy servers.  In
-the example below, 2 different dynamic socks proxies have been set up with different local listening ports
-(9050 and 9051).  Don't know how to utilize SSH and dynamic socks proxies?  Do yourself a favor and pick up a copy of
+the example below, 2 different dynamic SOCKS proxies have been set up with different local listening ports
+(9050 and 9051).  Don't know how to utilize SSH and dynamic SOCKS proxies?  Do yourself a favor and pick up a copy of
 [Cyber Plumber's Handbook and interactive lab](https://gumroad.com/l/cph_book_and_lab) to learn all about Secure Shell
 (SSH) tunneling, port redirection, and bending traffic like a boss.
 
