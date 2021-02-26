@@ -1,5 +1,5 @@
 google==2.0.3
 # Uncomment if the google package maintainer doesn't update PyPI.
 # -e git://github.com/MarioVilas/googlesearch.git#egg=googlesearch
-requests==2.23.0
+requests==2.25.1
 
