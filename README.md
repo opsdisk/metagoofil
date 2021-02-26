@@ -24,7 +24,48 @@ source .venv/bin/activate  # If using a virtual environment.
 pip install -r requirements.txt
 ```
 
+## Google is blocking me!
+
+If you start getting HTTP 429 errors, Google has rightfully detected you as a bot and will block your IP for a set
+period of time.  The solution is to use proxychains and a bank of proxies to round robin the lookups.
+
+Install proxychains4
+
+```bash
+apt install proxychains4 -y
+```
+
+Edit the `/etc/proxychains4.conf` configuration file to round robin the look ups through different proxy servers.  In
+the example below, 2 different dynamic SOCKS proxies have been set up with different local listening ports
+(9050 and 9051).  Don't know how to utilize SSH and dynamic SOCKS proxies?  Do yourself a favor and pick up a copy of
+[Cyber Plumber's Handbook and interactive lab](https://gumroad.com/l/cph_book_and_lab) to learn all about Secure Shell
+(SSH) tunneling, port redirection, and bending traffic like a boss.
+
+```bash
+vim /etc/proxychains4.conf
+```
+
+```bash
+round_robin
+chain_len = 1
+proxy_dns
+remote_dns_subnet 224
+tcp_read_time_out 15000
+tcp_connect_time_out 8000
+[ProxyList]
+socks4 127.0.0.1 9050
+socks4 127.0.0.1 9051
+```
+
+Throw `proxychains4` in front of the Python script and each lookup will go through a different proxy (and thus source
+from a different IP).  You could even tune down the `-e` delay time because you will be leveraging different proxy boxes.
+
+```bash
+proxychains4 python3 metagoofil.py -d https://github.com -f -t pdf,doc,xls
+```
+
 ## Docker Installation & Usage
+
 ```bash
 git clone https://github.com/opsdisk/metagoofil
 cd metagoofil

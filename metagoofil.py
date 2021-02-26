@@ -145,16 +145,32 @@ class Metagoofil:
                 f"[*] Searching for {self.search_max} .{filetype} files and waiting {self.delay} seconds between searches"
             )
             query = f"filetype:{filetype} site:{self.domain}"
-            for url in googlesearch.search(
-                query,
-                start=0,
-                stop=self.search_max,
-                num=100,
-                pause=self.delay,
-                extra_params={"filter": "0"},
-                user_agent=self.user_agent,
-            ):
-                self.files.append(url)
+
+            try:
+                for url in googlesearch.search(
+                    query,
+                    start=0,
+                    stop=self.search_max,
+                    num=100,
+                    pause=self.delay,
+                    extra_params={"filter": "0"},
+                    user_agent=self.user_agent,
+                ):
+                    self.files.append(url)
+
+            except Exception as e:
+                print(f"[-] EXCEPTION: {e}")
+                if e.code == 429:
+                    print(
+                        "[*] Google is blocking you for making too many requests.  You will need to spread out the "
+                        "Google searches with metagoofil's switches or utilize SSH and dynamic SOCKS proxies.  Don't "
+                        "know how to utilize SSH and dynamic SOCKS proxies?  Do yourself a favor and pick up a copy of "
+                        "The Cyber Plumber's Handbook and interactive lab (https://gumroad.com/l/cph_book_and_lab) to "
+                        "learn all about Secure Shell (SSH) tunneling, port redirection, and bending traffic like a "
+                        "boss."
+                    )
+                    print("[*] Exiting for now...")
+                    sys.exit(1)
 
             # Since googlesearch.search method retrieves URLs in batches of 100, ensure the file list only contains the
             # requested amount.
