@@ -159,6 +159,7 @@ class Metagoofil:
                     self.files.append(url)
 
             except Exception as e:
+                print(f"[-] EXCEPTION: {e}")
                 if e.code == 429:
                     print(
                         "[*] Google is blocking you for making too many requests.  You will need to spread out the "
