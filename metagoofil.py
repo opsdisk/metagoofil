@@ -76,6 +76,8 @@ class DownloadWorker(threading.Thread):
 
             except requests.exceptions.RequestException as e:
                 print(f"[-] Exception for url: {url} -- {e}")
+            except OSError as e:
+                print(f"[-] Download error: {e}")
 
             mg.queue.task_done()
 
