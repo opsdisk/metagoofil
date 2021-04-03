@@ -8,6 +8,7 @@ import random
 import sys
 import threading
 import time
+import urllib
 
 # Third party Python libraries.
 # google == 2.0.1, module author changed import name to googlesearch
@@ -19,6 +20,8 @@ import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+__version__ = "1.0.0"
 
 
 class DownloadWorker(threading.Thread):
@@ -61,10 +64,14 @@ class DownloadWorker(threading.Thread):
 
                     mg.total_bytes += size
 
-                    print(f"[+] Downloading file - [{size} bytes] {url}")
-
                     # Strip any trailing /'s before extracting file name.
-                    filename = str(url.strip("/").split("/")[-1])
+                    url_file_name = str(url.strip("/").split("/")[-1])
+
+                    # Decode URL file name if it's encoded.  No harm calling urllib.parse.unquote() if the URL file
+                    # name isn't URL encoded.
+                    filename = urllib.parse.unquote(url_file_name, encoding="utf-8")
+
+                    print(f"[+] Downloading \"{filename}\" [{size} bytes] from: {url}")
 
                     with open(os.path.join(mg.save_directory, filename), "wb") as fh:
                         for chunk in response.iter_content(chunk_size=1024):
@@ -326,10 +333,6 @@ if __name__ == "__main__":
     if not args.file_types:
         print("[!] Specify file types with -t")
         sys.exit(0)
-
-    if (args.download_file_limit > 0) and (args.download_files is False):
-        print("[+] Adding -w for you")
-        args.download_files = True
 
     if args.save_directory:
         print(f"[*] Downloaded files will be saved here: {args.save_directory}")
