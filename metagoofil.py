@@ -106,9 +106,7 @@ class Metagoofil:
     ):
         self.domain = domain
         self.delay = delay
-        self.save_links = save_links
-        if self.save_links:
-            self.html_links = open(f"html_links_{get_timestamp()}.txt", "a")
+        self.save_links = open(save_links, "a") if save_links else None
         self.url_timeout = url_timeout
         self.search_max = search_max
         self.download_file_limit = download_file_limit
@@ -197,10 +195,10 @@ class Metagoofil:
             # Save links to output to file.
             if self.save_links:
                 for f in self.files:
-                    self.html_links.write(f"{f}\n")
+                    self.save_links.write(f"{f}\n")
 
         if self.save_links:
-            self.html_links.close()
+            self.save_links.close()
 
         if self.download_files:
             print(
@@ -267,10 +265,15 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-f",
+        nargs="?",
+        metavar="SAVE_FILE",
         dest="save_links",
-        action="store_true",
+        action="store",
         default=False,
-        help="Save the html links to html_links_<TIMESTAMP>.txt file.",
+        help="R|Save the html links to a file.\n"
+        "no -f = Do not save links\n"
+        "-f = Save links to html_links_<TIMESTAMP>.txt\n"
+        "-f SAVE_FILE = Save links to SAVE_FILE",
     )
     parser.add_argument(
         "-i",
@@ -341,6 +344,11 @@ if __name__ == "__main__":
         if not os.path.exists(args.save_directory):
             print(f"[+] Creating folder: {args.save_directory}")
             os.mkdir(args.save_directory)
+
+    if args.save_links is False:
+        args.save_links = None
+    elif args.save_links is None:
+        args.save_links = f"html_links_{get_timestamp()}.txt"
 
     # print(vars(args))
     mg = Metagoofil(**vars(args))
