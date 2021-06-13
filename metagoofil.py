@@ -349,7 +349,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     if args.number_of_threads < 0:
-        print("[!] Number of threads (-n) must be greater than 0")
+        print("[!] Number of threads (-r) must be greater than 0")
         sys.exit(0)
 
     # print(vars(args))
