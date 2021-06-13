@@ -336,7 +336,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if args.save_directory:
+    if args.save_directory and args.download_files:
         print(f"[*] Downloaded files will be saved here: {args.save_directory}")
         if not os.path.exists(args.save_directory):
             print(f"[+] Creating folder: {args.save_directory}")
