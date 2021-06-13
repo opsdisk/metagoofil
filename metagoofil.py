@@ -251,7 +251,7 @@ if __name__ == "__main__":
         type=float,
         default=30.0,
         help=(
-            "Delay (in seconds) between searches.  If it's too small Google may block your IP, too big and your search"
+            "Delay (in seconds) between searches.  If it's too small Google may block your IP, too big and your search "
             "may take a while.  Default: 30.0"
         ),
     )
@@ -325,14 +325,6 @@ if __name__ == "__main__":
         help="Download the files, instead of just viewing search results.",
     )
     args = parser.parse_args()
-
-    if not args.domain:
-        print("[!] Specify a domain with -d")
-        sys.exit(0)
-
-    if not args.file_types:
-        print("[!] Specify file types with -t")
-        sys.exit(0)
 
     if args.save_directory:
         print(f"[*] Downloaded files will be saved here: {args.save_directory}")
