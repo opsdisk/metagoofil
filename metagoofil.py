@@ -238,6 +238,16 @@ class SmartFormatter(argparse.HelpFormatter):
         return argparse.HelpFormatter._split_lines(self, text, width)
 
 
+def pos(type):
+    def check(value):
+        try:
+            value_res = type(value)
+            assert value_res >= 0
+            return value_res
+        except (AssertionError, ValueError):
+            raise argparse.ArgumentTypeError(f"invalid value '{value}', must be a {type.__name__} >= 0")
+    return check
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
@@ -248,7 +258,7 @@ if __name__ == "__main__":
         "-e",
         dest="delay",
         action="store",
-        type=float,
+        type=pos(float),
         default=30.0,
         help=(
             "Delay (in seconds) between searches.  If it's too small Google may block your IP, too big and your search "
@@ -266,7 +276,7 @@ if __name__ == "__main__":
         "-i",
         dest="url_timeout",
         action="store",
-        type=int,
+        type=pos(int),
         default=15,
         help="Number of seconds to wait before timeout for unreachable/stale pages.  Default: 15",
     )
@@ -292,7 +302,7 @@ if __name__ == "__main__":
         "-r",
         dest="number_of_threads",
         action="store",
-        type=int,
+        type=pos(int),
         default=8,
         help="Number of downloader threads.  Default: 8",
     )
@@ -331,18 +341,6 @@ if __name__ == "__main__":
         if not os.path.exists(args.save_directory):
             print(f"[+] Creating folder: {args.save_directory}")
             os.mkdir(args.save_directory)
-
-    if args.delay < 0:
-        print("[!] Delay must be greater than 0")
-        sys.exit(0)
-
-    if args.url_timeout < 0:
-        print("[!] URL timeout (-i) must be greater than 0")
-        sys.exit(0)
-
-    if args.number_of_threads < 0:
-        print("[!] Number of threads (-r) must be greater than 0")
-        sys.exit(0)
 
     # print(vars(args))
     mg = Metagoofil(**vars(args))
