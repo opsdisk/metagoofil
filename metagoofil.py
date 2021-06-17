@@ -236,15 +236,23 @@ class SmartFormatter(argparse.HelpFormatter):
         return argparse.HelpFormatter._split_lines(self, text, width)
 
 
-def pos(type):
-    def check(value):
-        try:
-            value_res = type(value)
-            assert value_res >= 0
-            return value_res
-        except (AssertionError, ValueError):
-            raise argparse.ArgumentTypeError(f"invalid value '{value}', must be a {type.__name__} >= 0")
-    return check
+def positive_int(value):
+    try:
+        value_int = type(value)
+        assert value_int >= 0
+        return value_int
+    except (AssertionError, ValueError):
+        raise argparse.ArgumentTypeError(f"invalid value '{value}', must be an int >= 0")
+
+
+def positive_float(value):
+    try:
+        value_float = type(value)
+        assert value_float >= 0
+        return value_float
+    except (AssertionError, ValueError):
+        raise argparse.ArgumentTypeError(f"invalid value '{value}', must be a float >= 0")
+
 
 if __name__ == "__main__":
 
@@ -256,7 +264,7 @@ if __name__ == "__main__":
         "-e",
         dest="delay",
         action="store",
-        type=pos(float),
+        type=positive_float,
         default=30.0,
         help=(
             "Delay (in seconds) between searches.  If it's too small Google may block your IP, too big and your search "
@@ -279,7 +287,7 @@ if __name__ == "__main__":
         "-i",
         dest="url_timeout",
         action="store",
-        type=pos(int),
+        type=positive_int,
         default=15,
         help="Number of seconds to wait before timeout for unreachable/stale pages.  Default: 15",
     )
@@ -305,7 +313,7 @@ if __name__ == "__main__":
         "-r",
         dest="number_of_threads",
         action="store",
-        type=pos(int),
+        type=positive_int,
         default=8,
         help="Number of downloader threads.  Default: 8",
     )
