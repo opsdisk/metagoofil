@@ -21,7 +21,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 
 class DownloadWorker(threading.Thread):
@@ -71,7 +71,7 @@ class DownloadWorker(threading.Thread):
                     # name isn't URL encoded.
                     filename = urllib.parse.unquote(url_file_name, encoding="utf-8")
 
-                    print(f"[+] Downloading \"{filename}\" [{size} bytes] from: {url}")
+                    print(f'[+] Downloading "{filename}" [{size} bytes] from: {url}')
 
                     with open(os.path.join(mg.save_directory, filename), "wb") as fh:
                         for chunk in response.iter_content(chunk_size=1024):
@@ -257,7 +257,8 @@ def positive_float(value):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
-        description="Metagoofil - Search and download specific filetypes", formatter_class=SmartFormatter
+        description=f"Metagoofil v{__version__} - Search Google and download specific file types.",
+        formatter_class=SmartFormatter,
     )
     parser.add_argument("-d", dest="domain", action="store", required=True, help="Domain to search.")
     parser.add_argument(
