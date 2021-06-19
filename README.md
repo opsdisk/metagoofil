@@ -2,9 +2,10 @@
 
 ## Introduction
 
-metagoofil searches Google for specific types of files being publicly hosted on a domain and downloads them to your
-local box.  Undert the hood, it uses the Google query below to find all the `.pdf` files being hosted on `example.com`
-and downloads a local copy.
+metagoofil searches Google for specific types of files being publicly hosted on a web site and optionally downloads them
+to your local box.  This is useful for Open Source Intelligence gathering, penetration tests, or determining what files
+your organization is leaking to search indexers like Google.  As an example, it uses the Google query below to find all
+the `.pdf` files being hosted on `example.com` and optionally downloads a local copy.
 
 ```none
 site:example.com filetype:pdf
@@ -12,7 +13,7 @@ site:example.com filetype:pdf
 
 This is a maintained fork of the original <https://github.com/laramies/metagoofil> and is currently installed by
 default on the Kali Operating System <https://gitlab.com/kalilinux/packages/metagoofil>.  Unlike the original, a design
-decision was made to not do metadata analysis and instead defer to other tools like `exiftool` to extract any metadata.
+decision was made to not do metadata analysis and instead defer to other tools like `exiftool`.
 
 ```bash
 exiftool -r *.doc | egrep -i "Author|Creator|Email|Producer|Template" | sort -u
@@ -46,7 +47,7 @@ docker run -v $PWD:/data metagoofil -d kali.org -t pdf
 ## Google is blocking me!
 
 If you start getting HTTP 429 errors, Google has rightfully detected you as a bot and will block your IP for a set
-period of time.  The solution is to use proxychains and a bank of proxies to round robin the lookups.
+period of time.  One solution is to use proxychains and a bank of proxies to round robin the lookups.
 
 Install proxychains4
 
