@@ -106,9 +106,7 @@ class Metagoofil:
     ):
         self.domain = domain
         self.delay = delay
-        self.save_links = save_links
-        if self.save_links:
-            self.html_links = open(f"html_links_{get_timestamp()}.txt", "a")
+        self.save_links = open(save_links, "a") if save_links else None
         self.url_timeout = url_timeout
         self.search_max = search_max
         self.download_file_limit = download_file_limit
@@ -197,10 +195,10 @@ class Metagoofil:
             # Save links to output to file.
             if self.save_links:
                 for f in self.files:
-                    self.html_links.write(f"{f}\n")
+                    self.save_links.write(f"{f}\n")
 
         if self.save_links:
-            self.html_links.close()
+            self.save_links.close()
 
         if self.download_files:
             print(
@@ -238,6 +236,24 @@ class SmartFormatter(argparse.HelpFormatter):
         return argparse.HelpFormatter._split_lines(self, text, width)
 
 
+def positive_int(value):
+    try:
+        value_int = type(value)
+        assert value_int >= 0
+        return value_int
+    except (AssertionError, ValueError):
+        raise argparse.ArgumentTypeError(f"invalid value '{value}', must be an int >= 0")
+
+
+def positive_float(value):
+    try:
+        value_float = type(value)
+        assert value_float >= 0
+        return value_float
+    except (AssertionError, ValueError):
+        raise argparse.ArgumentTypeError(f"invalid value '{value}', must be a float >= 0")
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
@@ -248,25 +264,30 @@ if __name__ == "__main__":
         "-e",
         dest="delay",
         action="store",
-        type=float,
+        type=positive_float,
         default=30.0,
         help=(
-            "Delay (in seconds) between searches.  If it's too small Google may block your IP, too big and your search"
+            "Delay (in seconds) between searches.  If it's too small Google may block your IP, too big and your search "
             "may take a while.  Default: 30.0"
         ),
     )
     parser.add_argument(
         "-f",
+        nargs="?",
+        metavar="SAVE_FILE",
         dest="save_links",
-        action="store_true",
+        action="store",
         default=False,
-        help="Save the html links to html_links_<TIMESTAMP>.txt file.",
+        help="R|Save the html links to a file.\n"
+        "no -f = Do not save links\n"
+        "-f = Save links to html_links_<TIMESTAMP>.txt\n"
+        "-f SAVE_FILE = Save links to SAVE_FILE",
     )
     parser.add_argument(
         "-i",
         dest="url_timeout",
         action="store",
-        type=int,
+        type=positive_int,
         default=15,
         help="Number of seconds to wait before timeout for unreachable/stale pages.  Default: 15",
     )
@@ -292,7 +313,7 @@ if __name__ == "__main__":
         "-r",
         dest="number_of_threads",
         action="store",
-        type=int,
+        type=positive_int,
         default=8,
         help="Number of downloader threads.  Default: 8",
     )
@@ -326,31 +347,16 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if not args.domain:
-        print("[!] Specify a domain with -d")
-        sys.exit(0)
-
-    if not args.file_types:
-        print("[!] Specify file types with -t")
-        sys.exit(0)
-
-    if args.save_directory:
+    if args.save_directory and args.download_files:
         print(f"[*] Downloaded files will be saved here: {args.save_directory}")
         if not os.path.exists(args.save_directory):
             print(f"[+] Creating folder: {args.save_directory}")
             os.mkdir(args.save_directory)
 
-    if args.delay < 0:
-        print("[!] Delay must be greater than 0")
-        sys.exit(0)
-
-    if args.url_timeout < 0:
-        print("[!] URL timeout (-i) must be greater than 0")
-        sys.exit(0)
-
-    if args.number_of_threads < 0:
-        print("[!] Number of threads (-n) must be greater than 0")
-        sys.exit(0)
+    if args.save_links is False:
+        args.save_links = None
+    elif args.save_links is None:
+        args.save_links = f"html_links_{get_timestamp()}.txt"
 
     # print(vars(args))
     mg = Metagoofil(**vars(args))
