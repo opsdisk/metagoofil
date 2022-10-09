@@ -21,7 +21,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 
 class DownloadWorker(threading.Thread):
@@ -48,7 +48,13 @@ class DownloadWorker(threading.Thread):
                 else:
                     headers["User-Agent"] = mg.user_agent
 
-                response = requests.get(url, headers=headers, verify=False, timeout=mg.url_timeout, stream=True)
+                response = requests.get(
+                    url,
+                    headers=headers,
+                    verify=False,
+                    timeout=mg.url_timeout,
+                    stream=True,
+                )
 
                 # Download the file.
                 if response.status_code == 200:
@@ -64,14 +70,15 @@ class DownloadWorker(threading.Thread):
 
                     mg.total_bytes += size
 
-                    # Strip any trailing /'s before extracting file name.
-                    url_file_name = str(url.strip("/").split("/")[-1])
+                    # Strip any trailing /'s before extracting file name.  Use response.url in case there were HTTP
+                    # 301/302 redirects.
+                    url_file_name = str(response.url.strip("/").split("/")[-1])
 
                     # Decode URL file name if it's encoded.  No harm calling urllib.parse.unquote() if the URL file
                     # name isn't URL encoded.
                     filename = urllib.parse.unquote(url_file_name, encoding="utf-8")
 
-                    print(f'[+] Downloading "{filename}" [{size} bytes] from: {url}')
+                    print(f'[+] Downloading "{filename}" [{size} bytes] from: {response.url}')
 
                     with open(os.path.join(mg.save_directory, filename), "wb") as fh:
                         for chunk in response.iter_content(chunk_size=1024):
@@ -238,7 +245,7 @@ class SmartFormatter(argparse.HelpFormatter):
 
 def positive_int(value):
     try:
-        value_int = type(value)
+        value_int = int(value)
         assert value_int >= 0
         return value_int
     except (AssertionError, ValueError):
@@ -247,7 +254,7 @@ def positive_int(value):
 
 def positive_float(value):
     try:
-        value_float = type(value)
+        value_float = float(value)
         assert value_float >= 0
         return value_float
     except (AssertionError, ValueError):
@@ -260,7 +267,13 @@ if __name__ == "__main__":
         description=f"Metagoofil v{__version__} - Search Google and download specific file types.",
         formatter_class=SmartFormatter,
     )
-    parser.add_argument("-d", dest="domain", action="store", required=True, help="Domain to search.")
+    parser.add_argument(
+        "-d",
+        dest="domain",
+        action="store",
+        required=True,
+        help="Domain to search.",
+    )
     parser.add_argument(
         "-e",
         dest="delay",
@@ -293,14 +306,19 @@ if __name__ == "__main__":
         help="Number of seconds to wait before timeout for unreachable/stale pages.  Default: 15",
     )
     parser.add_argument(
-        "-l", dest="search_max", action="store", type=int, default=100, help="Maximum results to search.  Default: 100"
+        "-l",
+        dest="search_max",
+        action="store",
+        type=positive_int,
+        default=100,
+        help="Maximum results to search.  Default: 100",
     )
     parser.add_argument(
         "-n",
         dest="download_file_limit",
-        default=100,
         action="store",
-        type=int,
+        type=positive_int,
+        default=100,
         help="Maximum number of files to download per filetype.  Default: 100",
     )
     parser.add_argument(
@@ -322,8 +340,8 @@ if __name__ == "__main__":
         "-t",
         dest="file_types",
         action="store",
-        required=True,
         type=csv_list,
+        required=True,
         help=(
             "file_types to download (pdf,doc,xls,ppt,odp,ods,docx,xlsx,pptx).  To search all 17,576 three-letter "
             'file extensions, type "ALL"'
