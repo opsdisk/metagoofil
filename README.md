@@ -40,8 +40,9 @@ pip install -r requirements.txt
 git clone https://github.com/opsdisk/metagoofil
 cd metagoofil
 docker build -t metagoofil .
-# This will save the files in your current directory.
-docker run -v $PWD:/data metagoofil -d kali.org -t pdf
+
+# This will save the files in the host ./data directory.
+docker run -v $PWD/data:/app/data metagoofil -d github.com -f -n 10 -o data -r 4 -t pdf -w
 ```
 
 ## Google is blocking me!
