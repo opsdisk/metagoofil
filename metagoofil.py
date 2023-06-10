@@ -262,7 +262,6 @@ def positive_float(value):
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(
         description=f"Metagoofil v{__version__} - Search Google and download specific file types.",
         formatter_class=SmartFormatter,
