@@ -166,7 +166,7 @@ class Metagoofil:
                     num=100,
                     pause=self.delay,
                     extra_params={"filter": "0"},
-                    user_agent=self.user_agent,
+#                    user_agent=self.user_agent,
                 ):
                     self.files.append(url)
 
@@ -346,16 +346,16 @@ if __name__ == "__main__":
             'file extensions, type "ALL"'
         ),
     )
-    parser.add_argument(
-        "-u",
-        dest="user_agent",
-        nargs="?",
-        default="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
-        help="R|User-Agent for file retrieval against -d domain.\n"
-        'no -u = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"\n'
-        "-u = Randomize User-Agent\n"
-        '-u "My custom user agent 2.0" = Your customized User-Agent',
-    )
+#    parser.add_argument(
+#        "-u",
+#        dest="user_agent",
+#        nargs="?",
+#        default="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+#        help="R|User-Agent for file retrieval against -d domain.\n"
+#        'no -u = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"\n'
+#        "-u = Randomize User-Agent\n"
+#        '-u "My custom user agent 2.0" = Your customized User-Agent',
+#    )
     parser.add_argument(
         "-w",
         dest="download_files",
