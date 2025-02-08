@@ -21,7 +21,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 
 
 class DownloadWorker(threading.Thread):
@@ -38,10 +38,7 @@ class DownloadWorker(threading.Thread):
 
                 # Assign a User-Agent for each file request.
                 # No -u
-                if mg.user_agent == "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)":
-                    headers["User-Agent"] = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
-                # -u
-                elif mg.user_agent is None:
+                if mg.user_agent is None:
                     user_agent_choice = random.choice(mg.random_user_agents).strip()
                     headers["User-Agent"] = f"{user_agent_choice}"
                 # -u "My custom user agent 2.0"
@@ -350,10 +347,9 @@ if __name__ == "__main__":
         "-u",
         dest="user_agent",
         nargs="?",
-        default="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
-        help="R|User-Agent for file retrieval against -d domain.\n"
-        'no -u = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"\n'
-        "-u = Randomize User-Agent\n"
+        default=None,
+        help="R|User-Agent for googlesearch and file retrieval against -d domain.\n"
+        "no -u = Randomize User-Agent (recommended)\n"
         '-u "My custom user agent 2.0" = Your customized User-Agent',
     )
     parser.add_argument(
