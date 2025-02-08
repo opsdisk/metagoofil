@@ -19,12 +19,8 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-<<<<<<< HEAD
 
 __version__ = "2.0.0"
-=======
-__version__ = "1.3.0"
->>>>>>> master
 
 
 class DownloadWorker(threading.Thread):
