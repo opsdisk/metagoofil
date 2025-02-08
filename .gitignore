@@ -1,1 +1,4 @@
+data/
+html_links_*
+*.log
 .venv/

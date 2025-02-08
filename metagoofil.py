@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 # Standard Python libraries.
 import argparse
 import os
@@ -10,18 +9,18 @@ import threading
 import time
 import urllib
 
+
 # Third party Python libraries.
-# google == 2.0.1, module author changed import name to googlesearch
-# https://github.com/MarioVilas/googlesearch/commit/92309f4f23a6334a83c045f7c51f87b904e7d61d
-import googlesearch
 import requests
+import yagooglesearch
 
 # https://stackoverflow.com/questions/27981545/suppress-insecurerequestwarning-unverified-https-request-is-being-made-in-pytho
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-__version__ = "1.3.0"
+
+__version__ = "2.0.0"
 
 
 class DownloadWorker(threading.Thread):
@@ -155,16 +154,26 @@ class Metagoofil:
             )
             query = f"filetype:{filetype} site:{self.domain}"
 
+            # Initialize a yagooglesearch search client.
+            # See https://github.com/opsdisk/yagooglesearch for more details.
+            client = yagooglesearch.SearchClient(
+                query,
+                tbs="li:1",
+                max_search_result_urls_to_return=100,
+                http_429_cool_off_time_in_minutes=45,
+                http_429_cool_off_factor=1.5,
+                user_agent=self.user_agent,
+                verbosity=5,
+                verbose_output=False,
+            )
+
+            # Randomize the User-Agent for making Google queries in the yagooglesearch library.
+            client.assign_random_user_agent()
+
+            urls = client.search()
+
             try:
-                for url in googlesearch.search(
-                    query,
-                    start=0,
-                    stop=self.search_max,
-                    num=100,
-                    pause=self.delay,
-                    extra_params={"filter": "0"},
-                    user_agent=self.user_agent,
-                ):
+                for url in urls:
                     self.files.append(url)
 
             except Exception as e:
@@ -181,7 +190,7 @@ class Metagoofil:
                     print("[*] Exiting for now...")
                     sys.exit(1)
 
-            # Since googlesearch.search method retrieves URLs in batches of 100, ensure the file list only contains the
+            # By default, yagooglesearch retrieves URLs in batches of 100, ensure the file list only contains the
             # requested amount.
             if len(self.files) > self.search_max:
                 self.files = self.files[: -(len(self.files) - self.search_max)]
