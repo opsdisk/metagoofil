@@ -13,7 +13,7 @@ site:example.com filetype:pdf
 
 This is a maintained fork of the original <https://github.com/laramies/metagoofil> and is currently installed by default
 on the Kali Operating System <https://gitlab.com/kalilinux/packages/metagoofil>. Unlike the original, a design decision
-was made to not do metadata analysis and instead defer to other tools like `exiftool`.
+was made to not do metadata analysis and instead refer to other tools like `exiftool`.
 
 ```bash
 exiftool -r *.doc | egrep -i "Author|Creator|Email|Producer|Template" | sort -u
