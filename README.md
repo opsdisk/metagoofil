@@ -90,8 +90,14 @@ boxes.
 proxychains4 python metagoofil.py -d https://github.com -f -t pdf,doc,xls
 ```
 
+## Tests
+
+```bash
+python test_metagoofil.py
+```
+
 ## Security Disclosure Hall of Fame
 
 Thanks to these individuals for reporting and responsibly disclosing security issues:
 
-- Mohammed Faris (<https://github.com/M7Faris>)
+- Mohammed Faris (<https://github.com/M7Faris>) - https://github.com/opsdisk/metagoofil/issues/54
