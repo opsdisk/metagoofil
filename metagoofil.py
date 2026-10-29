@@ -8,8 +8,7 @@ import random
 import sys
 import threading
 import time
-import urllib
-
+import urllib.parse
 
 # Third party Python libraries.
 # google == 2.0.1, module author changed import name to googlesearch
@@ -20,10 +19,43 @@ import requests
 # https://stackoverflow.com/questions/27981545/suppress-insecurerequestwarning-unverified-https-request-is-being-made-in-pytho
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
+
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
-__version__ = "1.4.0"
+__version__ = "1.5.0"
+
+
+def get_safe_file_name(url: str, save_directory: str) -> str | None:
+    """Extract a file name from a URL that is safe to write inside save_directory.
+
+    Args:
+        url: The (possibly redirected) URL returned by the remote server. Treated as untrusted.
+        save_directory: The directory the file will be written to.
+
+    Returns:
+        A plain file name, or None if the name is empty, a traversal component, or resolves outside save_directory.
+    """
+    # Use only the URL path so query strings and fragments are excluded.
+    url_path = urllib.parse.urlparse(url).path.rstrip("/")
+
+    # Decode before sanitizing because %2f and %5c decode into path separators.
+    decoded_name = urllib.parse.unquote(url_path.split("/")[-1], encoding="utf-8")
+
+    # Treat backslashes as separators too, then keep only the final path component.
+    file_name = os.path.basename(decoded_name.replace("\\", "/"))
+
+    # Reject empty, special-directory, and NUL-containing names before building the output path.
+    if file_name in ("", ".", "..") or "\x00" in file_name:
+        return None
+
+    # Final containment check, which also resolves symlinks.
+    save_root = os.path.realpath(save_directory)
+    full_path = os.path.realpath(os.path.join(save_root, file_name))
+    if os.path.dirname(full_path) != save_root:
+        return None
+
+    return file_name
 
 
 class DownloadWorker(threading.Thread):
@@ -69,20 +101,18 @@ class DownloadWorker(threading.Thread):
 
                     mg.total_bytes += size
 
-                    # Strip any trailing /'s before extracting file name. Use response.url in case there were HTTP
-                    # 301/302 redirects.
-                    url_file_name = str(response.url.strip("/").split("/")[-1])
+                    # Use response.url in case there were HTTP 301/302 redirects.
+                    filename = get_safe_file_name(response.url, mg.save_directory)
 
-                    # Decode URL file name if it's encoded. No harm calling urllib.parse.unquote() if the URL file
-                    # name isn't URL encoded.
-                    filename = urllib.parse.unquote(url_file_name, encoding="utf-8")
+                    if filename is None:
+                        print(f"[-] Skipping unsafe file name from: {response.url}")
+                    else:
+                        print(f'[+] Downloading "{filename}" [{size} bytes] from: {response.url}')
 
-                    print(f'[+] Downloading "{filename}" [{size} bytes] from: {response.url}')
-
-                    with open(os.path.join(mg.save_directory, filename), "wb") as fh:
-                        for chunk in response.iter_content(chunk_size=1024):
-                            if chunk:  # Filter out keep-alive new chunks.
-                                fh.write(chunk)
+                        with open(os.path.join(mg.save_directory, filename), "wb") as fh:
+                            for chunk in response.iter_content(chunk_size=1024):
+                                if chunk:  # Filter out keep-alive new chunks.
+                                    fh.write(chunk)
 
                 else:
                     print(f"[-] URL {url} returned HTTP code {response.status_code}")
@@ -112,7 +142,7 @@ class Metagoofil:
     ):
         self.domain = domain
         self.delay = delay
-        self.save_links = open(save_links, "a") if save_links else None
+        self.save_links = save_links
         self.url_timeout = url_timeout
         self.search_max = search_max
         self.download_file_limit = download_file_limit
@@ -200,17 +230,13 @@ class Metagoofil:
 
             # Save links to output to file.
             if self.save_links:
-                for f in self.files:
-                    self.save_links.write(f"{f}\n")
-
-        if self.save_links:
-            self.save_links.close()
+                with open(self.save_links, "a") as save_links_file:
+                    for f in self.files:
+                        save_links_file.write(f"{f}\n")
 
         if self.download_files:
             print(
-                "[+] Total download: {} bytes / {:.2f} KB / {:.2f} MB".format(
-                    self.total_bytes, self.total_bytes / 1024, self.total_bytes / (1024 * 1024)
-                )
+                f"[+] Total download: {self.total_bytes} bytes / {self.total_bytes / 1024:.2f} KB / {self.total_bytes / (1024 * 1024):.2f} MB"
             )
 
     def download(self):
@@ -247,7 +273,7 @@ def positive_int(value):
         value_int = int(value)
         assert value_int >= 0
         return value_int
-    except (AssertionError, ValueError):
+    except AssertionError, ValueError:
         raise argparse.ArgumentTypeError(f"invalid value '{value}', must be an int >= 0")
 
 
@@ -256,7 +282,7 @@ def positive_float(value):
         value_float = float(value)
         assert value_float >= 0
         return value_float
-    except (AssertionError, ValueError):
+    except AssertionError, ValueError:
         raise argparse.ArgumentTypeError(f"invalid value '{value}', must be a float >= 0")
 
 
