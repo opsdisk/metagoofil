@@ -19,8 +19,7 @@ was made to not do metadata analysis and instead defer to other tools like `exif
 exiftool -r *.doc | egrep -i "Author|Creator|Email|Producer|Template" | sort -u
 ```
 
-Comments, suggestions, and improvements are always welcome. Be sure to follow [@opsdisk](https://twitter.com/opsdisk)
-on Twitter for the latest updates.
+Comments, suggestions, and improvements are always welcome.
 
 ## Installation
 
@@ -44,8 +43,8 @@ docker build -t metagoofil .
 
 # This will save the files in the host ./data directory.
 docker run -it --rm \
-    --user 1000:1000 \
-    -v $PWD/data:/app/data \
+    --user "$(id -u):$(id -g)" \
+    -v "$PWD/data:/app/data" \
     metagoofil \
     -d github.com -f -n 10 -r 4 -t pdf -w
 ```
@@ -90,3 +89,15 @@ boxes.
 ```bash
 proxychains4 python metagoofil.py -d https://github.com -f -t pdf,doc,xls
 ```
+
+## Tests
+
+```bash
+python test_metagoofil.py
+```
+
+## Security Disclosure Hall of Fame
+
+Thanks to these individuals for reporting and responsibly disclosing security issues:
+
+- Mohammed Faris (<https://github.com/M7Faris>) - https://github.com/opsdisk/metagoofil/issues/54
