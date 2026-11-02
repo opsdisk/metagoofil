@@ -273,7 +273,7 @@ def positive_int(value):
         value_int = int(value)
         assert value_int >= 0
         return value_int
-    except AssertionError, ValueError:
+    except (AssertionError, ValueError):
         raise argparse.ArgumentTypeError(f"invalid value '{value}', must be an int >= 0")
 
 
@@ -282,7 +282,7 @@ def positive_float(value):
         value_float = float(value)
         assert value_float >= 0
         return value_float
-    except AssertionError, ValueError:
+    except (AssertionError, ValueError):
         raise argparse.ArgumentTypeError(f"invalid value '{value}', must be a float >= 0")
 
 
