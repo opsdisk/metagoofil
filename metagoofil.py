@@ -138,7 +138,6 @@ class Metagoofil:
         number_of_threads,
         file_types,
         user_agent,
-        download_files,
     ):
         self.domain = domain
         self.delay = delay
@@ -160,7 +159,6 @@ class Metagoofil:
             with open("user_agents.txt") as fp:
                 self.random_user_agents = fp.readlines()
 
-        self.download_files = download_files
         self.total_bytes = 0
 
     def go(self):
@@ -218,8 +216,8 @@ class Metagoofil:
             if len(self.files) > self.search_max:
                 self.files = self.files[: -(len(self.files) - self.search_max)]
 
-            # Download files if specified with -w switch.
-            if self.download_files:
+            # Download files if specified with -o switch.
+            if self.save_directory:
                 self.download()
 
             # Otherwise, just display them.
@@ -234,7 +232,7 @@ class Metagoofil:
                     for f in self.files:
                         save_links_file.write(f"{f}\n")
 
-        if self.download_files:
+        if self.save_directory:
             print(
                 f"[+] Total download: {self.total_bytes} bytes / {self.total_bytes / 1024:.2f} KB / {self.total_bytes / (1024 * 1024):.2f} MB"
             )
@@ -380,16 +378,9 @@ if __name__ == "__main__":
         "no -u = Randomize User-Agent (recommended)\n"
         '-u "My custom user agent 2.0" = Your customized User-Agent',
     )
-    parser.add_argument(
-        "-w",
-        dest="download_files",
-        action="store_true",
-        default=False,
-        help="Download the files, instead of just viewing search results.",
-    )
     args = parser.parse_args()
 
-    if args.save_directory and args.download_files:
+    if args.save_directory:
         print(f"[*] Downloaded files will be saved here: {args.save_directory}")
         if not os.path.exists(args.save_directory):
             print(f"[-] The {args.save_directory} directory does not exist...exiting.")
